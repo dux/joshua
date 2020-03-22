@@ -19,6 +19,27 @@ class CleanApi
     def rescue_from klass, desc=nil, &block
       RESCUE_FROM[klass] = desc || block
     end
+
+    # show and render single error in class error format
+    def error text
+      api = new(:err)
+      api.resolve_api_body do
+        error text
+      end
+      api
+    end
+
+    def error_print error
+      return if ENV['RACK_ENV'] == 'test'
+
+      puts
+      puts 'CleanApi error dump'.red
+      puts '---'
+      puts '%s: %s' % [error.class, error.message]
+      puts '---'
+      puts error.backtrace
+      puts '---'
+    end
   end
 
   ###

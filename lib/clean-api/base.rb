@@ -13,6 +13,24 @@ class CleanApi
       remove_method name
     end
 
+    # ApplicationApi.auto_mount request: request, response: response, mount_on: '/api', development: true
+    # auto mount to a root
+    # * display doc in a root
+    # * call methods if possible /api/v1.comapny/1/show
+    def auto_mount request:, response:, mount_on:, development: false
+      mount_on = [request.base_url, mount_on].join('') unless mount_on.include?('//')
+
+      if request.url == mount_on
+        Doc.render request: request
+      else
+        path  = request.url.split(mount_on+'/', 2).last.split('?').first
+        parts = path.split('/')
+        klass = parts.shift
+        api = call parts, class: klass, request: request, response: response, development: development
+        api.to_json + "\n"
+      end
+    end
+
     def call action, opts={}
       api_class =
       if klass = opts.delete(:class)
@@ -35,27 +53,6 @@ class CleanApi
 
       api = api_class.new action, **opts
       api.execute_call
-    end
-
-    # show and render single error in class error format
-    def error text
-      api = new(:err)
-      api.resolve_api_body do
-        error text
-      end
-      api
-    end
-
-    def error_print error
-      return if ENV['RACK_ENV'] == 'test'
-
-      puts
-      puts 'CleanApi error dump'.red
-      puts '---'
-      puts '%s: %s' % [error.class, error.message]
-      puts '---'
-      puts error.backtrace
-      puts '---'
     end
 
     def activated

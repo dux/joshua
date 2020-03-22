@@ -1,12 +1,12 @@
 * { font-family: 'Inter', sans-serif; }
 .gutter { margin-left: 20px; }
-.sticky  { position: -webkit-sticky; position: sticky; top: 30px; }
+.sticky  { position: -webkit-sticky; position: sticky; top: 0; }
 .btn-outline-info svg { fill: #17a2b8; }
 .btn-outline-info:hover svg { fill: #eee; }
 button.request { float: right; display: none; }
 .box { border-top: 1px solid #ccc; padding: 20px 20px 10px 20px; border-top-color: #ccc; background-color: #fff; margin-bottom: 20px; }
 .box:hover button.request { display: inline; }
-.anchor  { display: block; position: relative; top: -30px; visibility: hidden; }
+.anchor  { display: block; position: relative; top: -95px; visibility: hidden; }
 .btn { background-color: #fff; }
 body     { background-color: #f7f7f7; margin-bottom: 200px; }
 header   { background-color: #fff; box-shadow:0 1px 4px rgba(0,0,0,.15); }

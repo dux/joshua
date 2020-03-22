@@ -38,7 +38,7 @@ class CleanApi
         end
         n.body do |n|
           n.style { File.read('./lib/misc/doc.css') }
-          n.header({ style: 'border-bottom: 1px solid rgb(228, 228, 228); margin-bottom: 40px;'}) do |n|
+          n.header({ style: 'border-bottom: 1px solid rgb(228, 228, 228);'}) do |n|
             n._container do |n|
               n.push top_icons
               n.push %[<button id="bearer_button" onclick="AuthButton.set()" class="btn btn-sm btn-outline-primary" style="float: right; margin-top: 15px; margin-right: 20px;">-</button>]
@@ -51,7 +51,7 @@ class CleanApi
           n._container do |n|
             n._row do |n|
               n._col_3 do |n|
-                n._sticky do |n|
+                n._sticky(style: 'padding-top: 30px;') do |n|
                   n.a({ class: :dark, href: '#top' }) { '<p><b>API OBJECTS</b></p>' }
                   n.push left_nav
 
@@ -94,8 +94,8 @@ class CleanApi
     end
 
     # anchor link
-    def name_link name
-      %[<a name="#{name}" class="anchor"></a>]
+    def name_link name, top=nil
+      %[<a name="#{name}" class="anchor" style="top: #{top || -95}px;"></a>]
     end
 
     # render single icon
@@ -135,11 +135,11 @@ class CleanApi
           @opts = @klass.opts
           icon = @opts.dig(:opts, :icon)
 
-          # n._sticky(style: 'background: #f7f7f7; padding-bottom: 5px;') do |n|
-            n.push name_link @klass
+          n._sticky(style: 'background: #f7f7f7; padding-bottom: 5px; padding-top: 30px; margin-top: 2px;') do |n|
+            n.push name_link @klass, 40
             n.push self.icon icon, style: 'position: absolute; margin-left: -40px; margin-top: 1px; fill: #777; background: #f7f7f7;' if icon
             n.h4 { @klass.to_s.sub(/Api$/, '') }
-          # end
+          end
 
           if desc = @opts.dig(:opts, :desc)
             n.p { desc }
