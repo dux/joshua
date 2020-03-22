@@ -15,6 +15,9 @@ class CleanApi
         url:   'mailto:reic.dino@gmail.com',
         image: '<path d="M22.22 9.787c0-5.13-4.062-8.307-8.983-8.307-6.666 0-11.457 4.948-11.457 11.431 0 6.042 4.609 9.609 9.999 9.609 1.64 0 3.749-.391 5.234-1.12l.364-2.031c-1.484.729-3.645 1.224-5.442 1.224-4.661 0-7.968-2.968-7.968-7.682 0-5.025 3.619-9.478 9.14-9.478 3.854 0 7.004 2.318 7.004 6.354 0 1.562-.39 3.671-1.588 4.843-.521.521-1.068.885-1.849.885-.599 0-1.015-.312-1.015-1.015 0-.235.052-.495.104-.729l1.614-6.458h-1.745l-.65 1.094c-.521-.938-1.615-1.381-2.63-1.381-3.386 0-5.208 3.151-5.208 6.25 0 1.198.416 2.291 1.197 3.047.599.598 1.485 1.041 2.5 1.041 1.328 0 2.422-.443 3.307-1.458.209.729 1.042 1.458 2.292 1.458 1.64 0 2.578-.625 3.541-1.562 1.536-1.484 2.239-3.828 2.239-6.015zm-7.916 1.276c0 1.77-.755 4.426-2.916 4.426-1.458 0-2.057-1.067-2.057-2.395 0-1.094.365-2.474 1.172-3.385.442-.495 1.015-.886 1.718-.886 1.406 0 2.083.886 2.083 2.24z"></path>',
       },
+      error: {
+        image: '<path d="M3,4v12c0,1.103,0.897,2,2,2h3.5l3.5,4l3.5-4H19c1.103,0,2-0.897,2-2V4c0-1.103-0.897-2-2-2H5C3.897,2,3,2.897,3,4z M11,5 h2v6h-2V5z M11,13h2v2h-2V13z" />'
+      }
     }
 
     def tag
@@ -22,46 +25,23 @@ class CleanApi
     end
 
     # render full page
-    def render
+    def render mount_on: nil, request: nil
+      @mount_on ||= request.url.split('?').first+'/'
+
       tag.html do |n|
         n.head  do |n|
           n.title 'CleanAPI Tester'
           n.link({ href: "https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,800,900&display=swap",  rel:"stylesheet" })
           n.link({ rel:"stylesheet", href:"https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" })
           n.script({ src: 'https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js' })
+          n.script %[window.api_opts = { mount_on: '#{@mount_on}' }]
         end
         n.body do |n|
-          n.style %[
-            * { font-family: 'Inter', sans-serif; }
-            .gutter { margin-left: 20px; }
-            .api-method { border-top: 1px solid #ccc; padding: 20px 20px 10px 20px; border-top-color: #ccc; background-color: #eee; margin-bottom: 20px; }
-            .sticky  { position: -webkit-sticky; position: sticky; top: 30px; }
-            .btn-outline-info svg { fill: #17a2b8; }
-            .btn-outline-info:hover svg { fill: #eee; }
-            button.request { float: right; display: none; }
-            .api-method:hover button.request { display: inline; }
-            .anchor  { display: block; position: relative; top: -30px; visibility: hidden; }
-            .btn { background-color: #fff; }
-            .nav     { background-color: #fff; }
-            body     { background-color: #fbfbfb; }
-            pre      { padding-bottom: 10px; font-family: inherit;}
-            h1.nav a { font-size: 22px; color: #383838; padding: 17px 0 18px 0; }
-            h5       { font-size: 18px; font-weight: 600; }
-            h5 a     { color: #333 !important; }
-            h6       { color: #888; margin-bottom: 10px; -font-size: 13px; }
-            gray     { color: #707070;  }
-            b        { color: #666975; }
-            svg      { margin: 0 5px; }
-            bold     { font-weight: 600; }
-            ul       { margin-left: -10px; margin-top: -5px;}
-            form label { font-weight: bold; display: block; }
-
-            #modal table td { padding-bottom: 15px; vertical-align: top; }
-            #modal table td:first-child { padding: 10px 30px 0 0; }
-          ]
-          n._nav({ style: 'border-bottom: 1px solid rgb(228, 228, 228); margin-bottom: 40px;'}) do |n|
+          n.style { File.read('./lib/misc/doc.css') }
+          n.header({ style: 'border-bottom: 1px solid rgb(228, 228, 228); margin-bottom: 40px;'}) do |n|
             n._container do |n|
               n.push top_icons
+              n.push %[<button id="bearer_button" onclick="AuthButton.set()" class="btn btn-sm btn-outline-primary" style="float: right; margin-top: 15px; margin-right: 20px;">-</button>]
               n.h1({ class: :nav}) { %[<a href="#top">CleanApi &nbsp; <gray>Docs</gray></a>] }
             end
           end
@@ -77,17 +57,36 @@ class CleanApi
 
                   n.br
                   n.br
-                  n.a({ class: :dark, href: '#top' }) { '<p><b>API LIBRARIES</b></p>' }
+
+                  n.p '<b>TOOLS</b>'
                   n.div do |n|
-                    n.push %[<p><a class="badge badge-light" href="#">Ruby</a></p>]
-                    n.push %[<p><a class="badge badge-light" href="#">Javascript</a></p>]
-                    n.push %[<p><a class="badge badge-light" href="#">Python</a></p>]
-                    n.push %[<p><a class="badge badge-light" href="#">C#</a></p>]
+                    n.push %[<p><a class="badge badge-light" href="#api_errors">Named errors</a></p>]
+                    n.push %[<p><a class="badge badge-light" href="#">Postman import URL</a></p>]
+                  end
+
+                  n.br
+
+                  n.p '<b>API LIBRARIES</b>'
+                  n.div do |n|
+                    n.push %[<a class="badge badge-light" href="#">Ruby</a>]
+                    n.push %[<a class="badge badge-light" href="#">Javascript</a>]
+                    n.push %[<a class="badge badge-light" href="#">Python</a>]
+                    n.push %[<a class="badge badge-light" href="#">C#</a>]
+                  end
+
+                  n.br
+
+                  n.p '<b>RESOURCES</b>'
+                  n.div do |n|
+                    n.push %[<a class="badge badge-light" href="http://vmrcre.org/web/scribe/home/-/blogs/why-rest-sucks">Why we only prefer POST?</a>]
                   end
                 end
               end
 
-              n._col_9 { index }
+              n._col_9 do |n|
+                n.push index
+                n.push list_errors
+              end
             end
           end
         end
@@ -106,8 +105,9 @@ class CleanApi
 
     # top side navigation icons
     def top_icons
-      tag.div({ style: 'float: right; margin-top: 20px;' }) do |n|
+      tag.div({ style: 'float: right; margin-top: 18px;' }) do |n|
         for icon in ICONS.values
+          next unless icon[:url]
           n.push %[<a target="_new" href="#{icon[:url]}">#{icon icon[:image]}</a>]
         end
       end
@@ -135,9 +135,11 @@ class CleanApi
           @opts = @klass.opts
           icon = @opts.dig(:opts, :icon)
 
-          n.push name_link @klass
-          n.push self.icon icon, style: 'position: absolute; margin-left: -40px; margin-top: 1px; fill: #777;' if icon
-          n.h4 { @klass.to_s.sub(/Api$/, '') }
+          # n._sticky(style: 'background: #f7f7f7; padding-bottom: 5px;') do |n|
+            n.push name_link @klass
+            n.push self.icon icon, style: 'position: absolute; margin-left: -40px; margin-top: 1px; fill: #777; background: #f7f7f7;' if icon
+            n.h4 { @klass.to_s.sub(/Api$/, '') }
+          # end
 
           if desc = @opts.dig(:opts, :desc)
             n.p { desc }
@@ -175,7 +177,7 @@ class CleanApi
 
     # render api method
     def render_method name:, m_name:, opts:
-      tag._api_method do |n|
+      tag._box do |n|
         # n.push %[<button onclick="" class="btn btn-info btn-sm request">request</button>]
         anchor = [@klass, m_name].join('-')
 
@@ -186,10 +188,10 @@ class CleanApi
         end
 
         n.p({style: 'margin: 20px 0 25px 0;'}) do |n|
-          path = "/api/#{@klass.api_path}"
+          path = @klass.api_path
           path += '/:id' if name == :member
           path += "/#{m_name}"
-          n.push %[<button href="#{path}" class="btn btn-light btn-sm" onclick='render_call(this.innerHTML, #{(opts[:params] || {}).to_json})'>#{path}</button>]
+          n.push %[<button href="#{path}" class="btn btn-outline-info btn-sm" onclick="ModalForm.render('#{@mount_on}'+this.innerHTML, #{(opts[:params] || {}).to_json.gsub('"', '&quot;')})">#{path}</button>]
         end
 
         if opts[:detail]
@@ -216,90 +218,34 @@ class CleanApi
       end
     end
 
+    def list_errors
+      tag.div do |n|
+        n.push name_link :api_errors
+        n.push icon ICONS[:error][:image], style: 'position: absolute; margin-left: -40px; margin-top: 1px; fill: #777;'
+        n.h4 { 'Named errors' }
+
+        n._box do |n|
+          if RESCUE_FROM.keys.length == 0
+            n.p 'No named errors defiend via'
+            n.code "rescue from :name, 'Error description'"
+          end
+
+          n._row({ style: 'margin-bottom: 30px;' }) do |n|
+            for key, desc in RESCUE_FROM
+              next if key == :all
+              next unless key.is_a?(Symbol) && desc.is_a?(String)
+
+              n._col_4 { "<code>#{key}</code>" }
+              n._col_8 { desc }
+            end
+          end
+        end
+      end
+    end
+
     def modal_dialog
       %[
-        <script>
-        window.Modal = {
-          render: function (title, data) {
-            $('#modal .modal-title').html(title)
-            $('#modal .modal-body').html(data)
-            $('#modal').show()
-          },
-          close: function () {
-            $('#modal').hide()
-          }
-        }
-
-        window.render_call = function (title, params) {
-          let data = []
-
-          data.push(`<form onsubmit="ApiCall.fetch('${title}', this); return false;">`)
-          data.push(`  <table>`)
-
-            if (title.includes('/:id/')) {
-              data.push(`    <tr><td><label>ID</label></td><td><input id="api_id_value" type="text" class="form-control" value="" /></td></tr>`)
-            }
-
-          for (let [name, vals] of Object.entries(params)) {
-            data.push(`  <tr>`)
-            data.push(`    <td><label>${name}</label></td><td>`)
-
-            if (vals.type == 'boolean') {
-              data.push(`    <input type="checkbox" class="form-control" name="${name}" />`)
-            } else {
-              data.push(`    <input type="text" class="form-control" name="${name}" value="" />`)
-            }
-
-            if (vals.default) {
-              data.push(`<small class="form-text text-muted">default: ${vals.default}</small>`)
-            }
-
-            data.push(`    </td></tr>`)
-          }
-
-          data.push(`  <tr><td></td><td><button class="btn btn-outline-primary">Execute API request</button></td></tr>`)
-          data.push(`  </table>`)
-          data.push(`</form>`)
-
-          data = `${data.join("\\n")}<div id="api_result"></div>`
-
-          Modal.render(title, data);
-        }
-
-        document.onkeydown = function(evt) {
-          evt = evt || window.event;
-          if (evt.keyCode == 27) {
-            Modal.close();
-          }
-        };
-
-        window.ApiCall = {
-          fetch: function(url, form) {
-            let post = $(form).serialize()
-
-            url = url.replace('/:id/', () => '/'+$('#api_id_value').val()+'/' )
-
-            full_url = url
-            if (post) full_url += `?${post}`
-
-            ApiCall.insert('...')
-
-            $.post(url, post, function(data) {
-              ApiCall.insert(JSON.stringify(data, null, 2))
-            })
-          },
-
-          insert: function(data) {
-            let out = []
-            out.push(`<div id="api_response"><hr /><button class="btn btn-sm btn-outline-info" style="float: right;" onclick="$('#api_response').remove()">close</button>`)
-            out.push(`<pre><a href="${full_url}">${full_url}</a>`)
-            out.push(data)
-            out.push(`</pre></div>`)
-            $('#api_result').html(out.join("\\n\\n"))
-          }
-        }
-
-        </script>
+        <script>#{File.read('./lib/misc/doc.js')}</script>
         <div id="modal" class="modal" tabindex="-1" role="dialog">
           <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(99,99,99,0.3)"></div>
           <div class="modal-dialog modal-lg" role="document">

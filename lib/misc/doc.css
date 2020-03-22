@@ -1,0 +1,29 @@
+* { font-family: 'Inter', sans-serif; }
+.gutter { margin-left: 20px; }
+.sticky  { position: -webkit-sticky; position: sticky; top: 30px; }
+.btn-outline-info svg { fill: #17a2b8; }
+.btn-outline-info:hover svg { fill: #eee; }
+button.request { float: right; display: none; }
+.box { border-top: 1px solid #ccc; padding: 20px 20px 10px 20px; border-top-color: #ccc; background-color: #fff; margin-bottom: 20px; }
+.box:hover button.request { display: inline; }
+.anchor  { display: block; position: relative; top: -30px; visibility: hidden; }
+.btn { background-color: #fff; }
+body     { background-color: #f7f7f7; margin-bottom: 200px; }
+header   { background-color: #fff; box-shadow:0 1px 4px rgba(0,0,0,.15); }
+pre      { padding-bottom: 10px; font-family: inherit;}
+h1.nav a { font-size: 22px; color: #383838; padding: 17px 0 18px 0; }
+h5       { font-size: 18px; font-weight: 600; }
+h5 a     { color: #333 !important; }
+h6       { color: #888; margin-bottom: 10px; -font-size: 13px; }
+gray     { color: #707070;  }
+b        { color: #666975; }
+svg      { margin: 0 5px; }
+bold     { font-weight: 600; }
+ul       { margin-left: -10px; margin-top: -5px;}
+form label { font-weight: bold; display: block; }
+code     { background: '#f8f8f8'; color: #e01e5a; border: 1px solid rgb(221, 221, 221); padding: 2px 7px; border-radius: 4px; font-size: 14px; font-family: Monospace; }
+
+pre.code { font-family: monospace; font-size: 13px; background:#f7f7f7; padding: 10px 10px; margin-top: 15px; }
+
+#modal table td { padding-bottom: 15px; vertical-align: top; }
+#modal table td:first-child { padding: 10px 30px 0 0; }

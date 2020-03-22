@@ -17,6 +17,8 @@ class ApplicationApi < CleanApi
     response.error 500, 'Error happens'
   end
 
+  rescue_from :named_error, 'Named error example'
+
   ###
 
   annotation :anonymous do

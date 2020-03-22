@@ -1,5 +1,5 @@
 class CleanApi
-  INSTANCE ||= Struct.new 'CleanApiOpts', :action, :api, :request, :response, :params, :id, :opts, :klass_opts, :is_development
+  INSTANCE ||= Struct.new 'CleanApiOpts', :action, :api, :request, :response, :params, :id, :opts, :klass_opts, :development, :bearer
 
   class << self
     # here we capture member & collection metods
@@ -22,7 +22,7 @@ class CleanApi
         begin
           klass.join('/').classify.constantize
         rescue NameError => e
-          if opts[:is_development]
+          if opts[:development]
             error_print e
             return error '%s (%s)' % [e.message, self]
           else
@@ -77,7 +77,7 @@ class CleanApi
 
   ###
 
-  def initialize action, id: nil, params: nil, opts: nil, request: nil, response: nil, is_development: false
+  def initialize action, id: nil, params: nil, opts: nil, request: nil, response: nil, bearer: nil, development: false
     @api = INSTANCE.new
 
     if action.is_a?(Array)
@@ -87,28 +87,34 @@ class CleanApi
       @api.action = action
     end
 
+    @api.id ||= id
+
     # set response header if response given
     response.header['Content-Type'] = 'application/json' if response
 
+    request_body = request.body.read.to_s
+
     # calculate the params hash
-    @api.params =
+    @api.params ||=
     if params
       params
-    elsif request && request.body.read.to_s[0] == '{'
-      JSON.load request.body.read
+    elsif request && request_body[0] == '{'
+      JSON.parse request_body
     elsif request
       request.params
     else
       {}
     end
 
+    bearer ||=
+    @api.bearer      = bearer
+
     # other options
-    @api.opts           = CleanHash::Indifferent.new(opts|| {})
-    @api.response       = CleanApi::Response.new
-    @api.id             = id.to_s == '' ? nil : id
-    @api.request        = request
-    @api.klass_opts     = self.class.opts.dig(@api.id ? :member : :collection, @api.action) || {}
-    @api.is_development = !!is_development
+    @api.opts        = CleanHash::Indifferent.new(opts|| {})
+    @api.response    = CleanApi::Response.new
+    @api.request     = request
+    @api.klass_opts  = self.class.opts.dig(@api.id ? :member : :collection, @api.action) || {}
+    @api.development = !!development
   end
 
   def message data
@@ -116,7 +122,7 @@ class CleanApi
   end
 
   def execute_call
-    if !@api.is_development && @api.request && @api.request_method == 'GET'
+    if !@api.development && @api.request && @api.request_method == 'GET'
       response.error 'GET HTTP requests are not allowed in production'
     else
       parse_api_params
