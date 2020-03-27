@@ -24,5 +24,5 @@ end
 
 desc 'Sinatra demo web'
 task :web do
-  system 'find . | grep -v .git | entr -r ruby web/loader.rb'
+  system 'find . | grep -v .git | entr -r ruby web/sinatra.rb'
 end

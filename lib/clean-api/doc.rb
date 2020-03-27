@@ -24,9 +24,14 @@ class CleanApi
       HtmlTagBuilder
     end
 
+    def misc_file name
+      File.read [__dir__, '../misc/%s' % name].join('/')
+    end
+
     # render full page
     def render mount_on: nil, request: nil
       @mount_on ||= request.url.split('?').first+'/'
+      @mount_on.sub! %r{//$}, '/'
 
       tag.html do |n|
         n.head  do |n|
@@ -37,7 +42,7 @@ class CleanApi
           n.script %[window.api_opts = { mount_on: '#{@mount_on}' }]
         end
         n.body do |n|
-          n.style { File.read('./lib/misc/doc.css') }
+          n.style { misc_file('doc.css') }
           n.header({ style: 'border-bottom: 1px solid rgb(228, 228, 228);'}) do |n|
             n._container do |n|
               n.push top_icons
@@ -245,7 +250,7 @@ class CleanApi
 
     def modal_dialog
       %[
-        <script>#{File.read('./lib/misc/doc.js')}</script>
+        <script>#{misc_file('doc.js')}</script>
         <div id="modal" class="modal" tabindex="-1" role="dialog">
           <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(99,99,99,0.3)"></div>
           <div class="modal-dialog modal-lg" role="document">

@@ -13,25 +13,55 @@ class CleanApi
       remove_method name
     end
 
+    # perform auto_mount from a rake call
+    def call env
+      request = Rack::Request.new env
+
+      if request.path == '/favicon.ico'
+        [
+          200,
+          { 'Cache-Control'=>'public; max-age=1000000' },
+          [Doc.misc_file('favicon.png')]
+        ]
+      else
+        data = auto_mount request: request, mount_on: '/', development: ENV['RACK_ENV'] == 'development'
+
+        if data[0] == '{'
+          [
+            200,
+            { 'Content-Type' => 'application/json', 'Cache-Control'=>'private; max-age=0' },
+            [data]
+          ]
+        else
+          [
+            200,
+            { 'Content-Type' => 'text/html', 'Cache-Control'=>'public; max-age=3600' },
+            [data]
+          ]
+        end
+      end
+    end
+
     # ApplicationApi.auto_mount request: request, response: response, mount_on: '/api', development: true
     # auto mount to a root
     # * display doc in a root
     # * call methods if possible /api/v1.comapny/1/show
-    def auto_mount request:, response:, mount_on:, development: false
+    def auto_mount request:, response: nil, mount_on:, development: false
       mount_on = [request.base_url, mount_on].join('') unless mount_on.include?('//')
 
       if request.url == mount_on
         Doc.render request: request
       else
-        path  = request.url.split(mount_on+'/', 2).last.split('?').first
+        mount_on = mount_on+'/' unless mount_on.end_with?('/')
+        path  = request.url.split(mount_on, 2).last.split('?').first.to_s
         parts = path.split('/')
         klass = parts.shift
-        api = call parts, class: klass, request: request, response: response, development: development
+        api = render parts, class: klass, request: request, response: response, development: development
         api.to_json + "\n"
       end
     end
 
-    def call action, opts={}
+    def render action, opts={}
       api_class =
       if klass = opts.delete(:class)
         klass = klass.split('/') if klass.is_a?(String)
@@ -107,8 +137,8 @@ class CleanApi
     @api.bearer      = bearer
 
     # other options
-    @api.opts        = CleanHash::Indifferent.new(opts|| {})
-    @api.response    = CleanApi::Response.new
+    @api.opts        = ::CleanHash::Indifferent.new(opts|| {})
+    @api.response    = ::CleanApi::Response.new
     @api.request     = request
     @api.klass_opts  = self.class.opts.dig(@api.id ? :member : :collection, @api.action) || {}
     @api.development = !!development
@@ -206,7 +236,7 @@ class CleanApi
       end
     end
 
-    @api.params = CleanHash::Indifferent.new @api.params
+    @api.params = ::CleanHash::Indifferent.new @api.params
   end
 
   def parse_annotations

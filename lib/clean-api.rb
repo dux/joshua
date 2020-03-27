@@ -19,6 +19,10 @@ unless ''.respond_to?(:dasherize)
   end
 end
 
+require 'json'
+require 'html-tag'
+require 'clean-hash'
+
 require_relative './clean-api/params/define'
 require_relative './clean-api/params/parse'
 require_relative './clean-api/params/types'

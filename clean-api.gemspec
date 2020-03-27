@@ -14,5 +14,6 @@ Gem::Specification.new 'clean-api' do |gem|
 
   gem.executables = []
 
-  gem.add_runtime_dependency 'dry-inflector', '~> 0'
+  gem.add_runtime_dependency 'dry-inflector'
+  gem.add_runtime_dependency 'json'
 end

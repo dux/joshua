@@ -2,7 +2,7 @@ source 'http://rubygems.org'
 
 gemspec
 
-gem 'clean-hash', git: 'git@github.com:dux/clean-hash.git'
+gem 'clean-hash'
 
 group :default do
   gem 'awesome_print'
@@ -16,6 +16,5 @@ end
 group :web do
   gem 'puma'
   gem 'sinatra'
-  gem 'hamlit'
   gem 'html-tag'
 end
