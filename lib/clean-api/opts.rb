@@ -3,16 +3,20 @@ class CleanApi
   ANNOTATIONS   ||= {}
   OPTS            = {}
   PLUGINS         = {}
-  ACTIVATED       = []
+  DOCUMENTED      = []
 
   class << self
     def base what
       set :opts, :base, what
     end
 
-    # if you want to make API public use "is_active"
-    def is_active
-      ACTIVATED.push self unless ACTIVATED.include?(self)
+    # if you want to make API DOC public use "documented"
+    def documented
+      if self == CleanApi
+        DOCUMENTED.map(&:to_s).sort.map(&:constantize)
+      else
+        DOCUMENTED.push self unless DOCUMENTED.include?(self)
+      end
     end
 
     def api_path
@@ -103,11 +107,22 @@ class CleanApi
       end
     end
 
+    # method in available
+    def gettable
+      if @method_type
+        PARAMS.__add_gettable
+      else
+        raise ArgumentError.new('gettable can only be set on methods')
+      end
+    end
+
     # block execute before any public method or just some member or collection methods
     def before &block
       set_callback :before, block
     end
 
+    # block execute after any public method or just some member or collection methods
+    # used to add meta tags to response
     def after &block
       set_callback :after, block
     end

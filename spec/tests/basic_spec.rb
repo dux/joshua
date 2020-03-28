@@ -24,17 +24,17 @@ describe 'dev' do
   end
 
   it 'executes before in order' do
-    response = CompanyApi.call :index, id: 1, params: { name: 'Dux' }
+    response = CompanyApi.render :index, id: 1, params: { name: 'Dux' }
     expect(response).to eq({success: true, message: 'all ok', meta: { ip: '1.2.3.4' }, data: 'JRNI' })
   end
 
   it 'expects clasic module to be incuded' do
-    response = GenericApi.call :module_clasic
+    response = GenericApi.render :module_clasic
     expect(response).to eq({ data: 'is_module', meta: { ip: '1.2.3.4' }, :success=>true})
   end
 
   it 'expects plugins to work' do
-    response = GenericApi.call :plugin_test
+    response = GenericApi.render :plugin_test
     expect(response).to eq({ data: 'from_plugin', success: true, meta: { ip: '1.2.3.4' }})
   end
 end

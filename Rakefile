@@ -10,7 +10,11 @@ end
 
 desc 'Load console'
 task console: :env do
-  pry
+  require 'byebug'
+
+  load './spec/base'
+
+  byebug
 end
 
 desc 'Dump raw JSON from fixtures'

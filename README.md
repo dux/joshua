@@ -94,9 +94,9 @@ params do
 
   # supported types with options
   # boolean
-  is_active :boolean # { type: :boolean, default: false }
-  is_active false    # { type: :boolean, default: false }
-  is_active true     # { type: :boolean, default: true }
+  activated :boolean # { type: :boolean, default: false }
+  activated false    # { type: :boolean, default: false }
+  activated true     # { type: :boolean, default: true }
 
   # other
   amount  Float, { min: [5, '$5 is minimal purchase'], max: 500 }

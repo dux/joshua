@@ -91,12 +91,12 @@ describe 'tesing params' do
     end
 
     it 'expects to fail with bad user and pass' do
-      response = UserApi.call :login, params: { user: :a, pass: :b }
+      response = UserApi.render :login, params: { user: :a, pass: :b }
       expect(response[:success]).to eq(false)
     end
 
     it 'expects to report missing parameters' do
-      response = UserApi.call :login
+      response = UserApi.render :login
       expect(response[:error][:details]).to eq({
         user: 'Argument required',
         pass: 'Argument required'
@@ -104,13 +104,13 @@ describe 'tesing params' do
     end
 
     it 'expects to pass with good user and pass' do
-      response = UserApi.call :login, params: { user: :foo, pass: :bar }
+      response = UserApi.render :login, params: { user: :foo, pass: :bar }
       expect(response[:success]).to eq(true)
     end
 
     it 'expects to pass all params when no params are defined' do
       data   = { foo: 'bar', baz: true }
-      result = GenericApi.call :param_test_1, params: data
+      result = GenericApi.render :param_test_1, params: data
       expect(result[:data]).to eq(data)
     end
   end

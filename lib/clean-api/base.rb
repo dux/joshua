@@ -85,10 +85,6 @@ class CleanApi
       api.execute_call
     end
 
-    def activated
-      CleanApi::ACTIVATED.map(&:to_s).sort.map(&:constantize)
-    end
-
     private
 
     def only_in_api_methods!
@@ -119,7 +115,7 @@ class CleanApi
     # set response header if response given
     response.header['Content-Type'] = 'application/json' if response
 
-    request_body = request.body.read.to_s
+    request_body = request ? request.body.read.to_s : nil
 
     # calculate the params hash
     @api.params ||=

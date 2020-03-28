@@ -46,6 +46,10 @@ class CleanApi
         @opts[:detail] = data
       end
 
+      def __add_gettable
+        @opts[:gettable] = true
+      end
+
       def __add_annotation name, data
         @opts[:annotations] ||= {}
         @opts[:annotations][name] = data

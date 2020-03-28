@@ -4,11 +4,6 @@ class ApplicationApi < CleanApi
 
   ###
 
-  desc    'API rspec fixtures'
-  detail  'No need for detail description'
-
-  ###
-
   rescue_from 405, '$ not found'
 
   rescue_from :all do |error|

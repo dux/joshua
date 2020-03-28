@@ -121,7 +121,7 @@ class CleanApi
     # left side navigation
     def left_nav
       tag.div do |n|
-        CleanApi.activated.each do |name|
+        CleanApi.documented.each do |name|
           n.a({ class:'btn btn-outline-info btn-sm', style: '-font-size: 14px; margin-bottom: 10px;', href: '#%s' % name}) do |n|
             icon = name.opts.dig(:opts, :icon)
             n.push self.icon icon, size: 20 if icon
@@ -133,10 +133,10 @@ class CleanApi
       end
     end
 
-    # render doc for all activated classes
+    # render doc for all documented classes
     def index
       tag.div do |n|
-        for @klass in CleanApi.activated
+        for @klass in CleanApi.documented
           @opts = @klass.opts
           icon = @opts.dig(:opts, :icon)
 

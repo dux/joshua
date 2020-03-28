@@ -6,7 +6,7 @@ gem 'clean-hash'
 
 group :default do
   gem 'awesome_print'
-  gem 'pry'
+  gem 'byebug'
 end
 
 group :test do
