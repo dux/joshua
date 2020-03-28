@@ -29,9 +29,9 @@ class CleanApi
     end
 
     # render full page
-    def render mount_on: nil, request: nil
-      @mount_on ||= request.url.split('?').first+'/'
-      @mount_on.sub! %r{//$}, '/'
+    def render mount_on: nil, request: nil, bearer: nil
+      mount_on ||= request.url.split('?').first+'/'
+      mount_on.sub! %r{//$}, '/'
 
       tag.html do |n|
         n.head  do |n|
@@ -39,7 +39,7 @@ class CleanApi
           n.link({ href: "https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,800,900&display=swap",  rel:"stylesheet" })
           n.link({ rel:"stylesheet", href:"https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" })
           n.script({ src: 'https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js' })
-          n.script %[window.api_opts = { mount_on: '#{@mount_on}' }]
+          n.script %[window.api_opts = { mount_on: '#{mount_on}', bearer: '#{bearer}' }]
         end
         n.body do |n|
           n.style { misc_file('doc.css') }
@@ -196,7 +196,7 @@ class CleanApi
           path = @klass.api_path
           path += '/:id' if name == :member
           path += "/#{m_name}"
-          n.push %[<button href="#{path}" class="btn btn-outline-info btn-sm" onclick="ModalForm.render('#{@mount_on}'+this.innerHTML, #{(opts[:params] || {}).to_json.gsub('"', '&quot;')})">#{path}</button>]
+          n.push %[<button href="#{path}" class="btn btn-outline-info btn-sm" onclick="ModalForm.render(api_opts.mount_on+this.innerHTML, #{(opts[:params] || {}).to_json.gsub('"', '&quot;')})">#{path}</button>]
         end
 
         if opts[:detail]

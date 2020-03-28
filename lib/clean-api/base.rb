@@ -129,8 +129,10 @@ class CleanApi
       {}
     end
 
-    bearer ||=
-    @api.bearer      = bearer
+    # set bearer token
+    @api.bearer   = bearer
+    @api.bearer   = @api.params['api_token']
+    @api.bearer ||= request.env['HTTP_AUTHORIZATION'].to_s.split('Bearer ')[1] if request
 
     # other options
     @api.opts        = ::CleanHash::Indifferent.new(opts|| {})

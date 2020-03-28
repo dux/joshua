@@ -107,13 +107,27 @@ class CleanApi
       end
     end
 
-    # method in available
+    # method in available for GET requests as well
     def gettable
       if @method_type
         PARAMS.__add_gettable
       else
         raise ArgumentError.new('gettable can only be set on methods')
       end
+    end
+
+    # allow methods without @api.bearer token set
+    def unsafe
+      if @method_type
+        PARAMS.__add_gettable
+      else
+        raise ArgumentError.new('Only api methods can be unsafe')
+      end
+    end
+
+    # all api methods are secure (require bearer token)
+    def unsecure
+
     end
 
     # block execute before any public method or just some member or collection methods
