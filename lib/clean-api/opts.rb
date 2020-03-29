@@ -92,7 +92,7 @@ class CleanApi
     # api method description
     def desc data
       if @method_type
-        PARAMS.__add_desc data
+        PARAMS.__add :desc, data
       else
         set :opts, :desc, data
       end
@@ -101,7 +101,7 @@ class CleanApi
     # api method detailed description
     def detail data
       if @method_type
-        PARAMS.__add_detail data
+        PARAMS.__add :detail, data
       else
         set :opts, :detail, data
       end
@@ -110,7 +110,7 @@ class CleanApi
     # method in available for GET requests as well
     def gettable
       if @method_type
-        PARAMS.__add_gettable
+        PARAMS.__add :gettable
       else
         raise ArgumentError.new('gettable can only be set on methods')
       end
@@ -118,8 +118,8 @@ class CleanApi
 
     # allow methods without @api.bearer token set
     def unsafe
-      if @method_type
-        PARAMS.__add_gettable
+        if @method_type
+        PARAMS.__add :unsafe
       else
         raise ArgumentError.new('Only api methods can be unsafe')
       end

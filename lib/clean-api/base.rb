@@ -1,5 +1,5 @@
 class CleanApi
-  INSTANCE ||= Struct.new 'CleanApiOpts', :action, :api, :request, :response, :params, :id, :opts, :klass_opts, :development, :bearer
+  INSTANCE ||= Struct.new 'CleanApiOpts', :action, :api, :request, :response, :params, :id, :opts, :method_opts, :development, :bearer
 
   class << self
     # here we capture member & collection metods
@@ -135,10 +135,12 @@ class CleanApi
     @api.bearer ||= request.env['HTTP_AUTHORIZATION'].to_s.split('Bearer ')[1] if request
 
     # other options
+    @api.params      = ::CleanHash::Indifferent.new @api.params
     @api.opts        = ::CleanHash::Indifferent.new(opts|| {})
     @api.response    = ::CleanApi::Response.new
+    @api.action      = @api.action.to_sym
     @api.request     = request
-    @api.klass_opts  = self.class.opts.dig(@api.id ? :member : :collection, @api.action) || {}
+    @api.method_opts = self.class.opts.dig(@api.id ? :member : :collection, @api.action) || {}
     @api.development = !!development
   end
 
@@ -147,8 +149,8 @@ class CleanApi
   end
 
   def execute_call
-    if !@api.development && @api.request && @api.request_method == 'GET'
-      response.error 'GET HTTP requests are not allowed in production'
+    if !@api.development && @api.request && @api.request_method == 'GET' && !@api.method_opts[:gettable]
+      response.error 'GET request is not allowed'
     else
       parse_api_params
       parse_annotations
@@ -213,32 +215,28 @@ class CleanApi
   private
 
   def parse_api_params
-    @api.klass_opts[:params] ||= {}
+    return unless @api.method_opts[:params]
 
-    if @api.klass_opts[:params].keys.length > 0
-      parse = CleanApi::Params::Parse.new
+    parse = CleanApi::Params::Parse.new
 
-      for name, opts in @api.klass_opts[:params]
-        # enforce required
-        if opts[:required] && @api.params[name].to_s == ''
-          response.error_detail name, 'Paramter is required'
-        end
+    for name, opts in @api.method_opts[:params]
+      # enforce required
+      if opts[:required] && @api.params[name].to_s == ''
+        response.error_detail name, 'Paramter is required'
+      end
 
-        begin
-          # check and coerce value
-          @api.params[name] = parse.check opts[:type], @api.params[name], opts
-        rescue CleanApi::Error => error
-          # add to details if error found
-          response.error_detail name, error.message
-        end
+      begin
+        # check and coerce value
+        @api.params[name] = parse.check opts[:type], @api.params[name], opts
+      rescue CleanApi::Error => error
+        # add to details if error found
+        response.error_detail name, error.message
       end
     end
-
-    @api.params = ::CleanHash::Indifferent.new @api.params
   end
 
   def parse_annotations
-    for key, opts in (@api.klass_opts[:annotations] || {})
+    for key, opts in (@api.method_opts[:annotations] || {})
       instance_exec *opts, &ANNOTATIONS[key]
     end
   end

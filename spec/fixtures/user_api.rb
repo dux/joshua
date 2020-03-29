@@ -6,6 +6,7 @@ class UserApi < ModelApi
 
   collection do
     anonymous
+    unsafe
     params.user!
     params do
       pass!

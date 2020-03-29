@@ -38,16 +38,8 @@ class CleanApi
           .tap { @opts = {} }
       end
 
-      def __add_desc data
-        @opts[:desc] = data
-      end
-
-      def __add_detail data
-        @opts[:detail] = data
-      end
-
-      def __add_gettable
-        @opts[:gettable] = true
+      def __add name, value=true
+        @opts[name] = value
       end
 
       def __add_annotation name, data
