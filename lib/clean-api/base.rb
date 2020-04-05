@@ -62,12 +62,15 @@ class CleanApi
     # * display doc in a root
     # * call methods if possible /api/v1.comapny/1/show
     def auto_mount request:, response:, mount_on: nil, development: false
-      # set response header if response given
-      response.header['Content-Type'] = 'application/json' if response
+      mount_on = [request.base_url, mount_on].join('') unless mount_on.to_s.include?('//')
 
-      if request.url == mount_on
+      if request.url == mount_on && request.request_method == 'GET'
+        response.header['Content-Type'] = 'text/html'
+
         Doc.render request: request
       else
+        response.header['Content-Type'] = 'application/json'
+
         body     = request.body.read.to_s
         body     = body[0] == '{' ? JSON.parse(body) : nil
 
@@ -95,7 +98,6 @@ class CleanApi
           opts[:params] = request.params || {}
           opts[:bearer] = opts[:params]['api_token']
 
-          mount_on = [request.base_url, mount_on].join('') unless mount_on.to_s.include?('//')
           mount_on = mount_on+'/' unless mount_on.end_with?('/')
           path     = request.url.split(mount_on, 2).last.split('?').first.to_s
           parts    = path.split('/')
