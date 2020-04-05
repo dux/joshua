@@ -24,6 +24,6 @@ get '/api*' do
   instance_exec &API_CALL
 end
 
-post '/api/*' do
+post '/api*' do
   instance_exec &API_CALL
 end

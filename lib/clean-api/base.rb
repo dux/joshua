@@ -11,7 +11,8 @@ class CleanApi
     :raw,
     :rack_response,
     :request,
-    :response
+    :response,
+    :uid
 
   attr_reader :api
 
@@ -60,18 +61,52 @@ class CleanApi
     # auto mount to a root
     # * display doc in a root
     # * call methods if possible /api/v1.comapny/1/show
-    def auto_mount request:, response: nil, mount_on:, development: false
-      mount_on = [request.base_url, mount_on].join('') unless mount_on.include?('//')
+    def auto_mount request:, response:, mount_on: nil, development: false
+      # set response header if response given
+      response.header['Content-Type'] = 'application/json' if response
 
       if request.url == mount_on
         Doc.render request: request
       else
-        mount_on = mount_on+'/' unless mount_on.end_with?('/')
-        path  = request.url.split(mount_on, 2).last.split('?').first.to_s
-        parts = path.split('/')
-        klass = parts.shift
+        body     = request.body.read.to_s
+        body     = body[0] == '{' ? JSON.parse(body) : nil
 
-        response = render parts, class: klass, request: request, response: response, development: development
+        # class: klass, params: params, bearer: bearer, request: request, response: response, development: development
+        opts = {}
+        opts[:request]     = request
+        opts[:response]    = response
+        opts[:development] = development
+
+        action =
+        if body
+          # {
+          #   "id": 'foo',         # unique ID that will be returned, as required by JSON RPC spec
+          #   "class": 'v1/users', # v1/users => V1::UsersApi
+          #   "action": 'index',   # "index' or "6/info" or [6, "info"]
+          #   "token": 'ab12ef',   # api_token (bearer)
+          #   "params": {}         # methos params
+          # }
+          opts[:params] = body['params'] || {}
+          opts[:bearer] = body['token']
+          opts[:class]  = body['class']
+
+          body['action']
+        else
+          opts[:params] = request.params || {}
+          opts[:bearer] = opts[:params]['api_token']
+
+          mount_on = [request.base_url, mount_on].join('') unless mount_on.to_s.include?('//')
+          mount_on = mount_on+'/' unless mount_on.end_with?('/')
+          path     = request.url.split(mount_on, 2).last.split('?').first.to_s
+          parts    = path.split('/')
+
+          opts[:class] = parts.shift
+          parts
+        end
+
+        opts[:bearer] ||= request.env['HTTP_AUTHORIZATION'].to_s.split('Bearer ')[1]
+
+        response = render action, **opts
 
         if response.is_a?(Hash)
           response.to_json + "\n"
@@ -120,7 +155,7 @@ class CleanApi
 
   ###
 
-  def initialize action, id: nil, params: nil, opts: nil, request: nil, response: nil, bearer: nil, development: false
+  def initialize action, id: nil, bearer: nil, params: {}, opts: {}, request: nil, response: nil, development: false
     @api = INSTANCE.new
 
     if action.is_a?(Array)
@@ -130,38 +165,15 @@ class CleanApi
       @api.action = action
     end
 
-    @api.id ||= id
-
-    # set response header if response given
-    response.header['Content-Type'] = 'application/json' if response
-
-    request_body = request ? request.body.read.to_s : nil
-
-    # calculate the params hash
-    @api.params ||=
-    if params
-      params
-    elsif request && request_body[0] == '{'
-      JSON.parse request_body
-    elsif request
-      request.params
-    else
-      {}
-    end
-
-    # set bearer token
     @api.bearer   = bearer
-    @api.bearer   = @api.params['api_token']
-    @api.bearer ||= request.env['HTTP_AUTHORIZATION'].to_s.split('Bearer ')[1] if request
-
-    # other options
+    @api.id          ||= id
     @api.action        = @api.action.to_sym
     @api.request       = request
     @api.method_opts   = self.class.opts.dig(@api.id ? :member : :collection, @api.action) || {}
     @api.development   = !!development
     @api.rack_response = response
-    @api.params        = ::CleanHash::Indifferent.new @api.params
-    @api.opts          = ::CleanHash::Indifferent.new(opts|| {})
+    @api.params        = ::CleanHash::Indifferent.new params
+    @api.opts          = ::CleanHash::Indifferent.new opts
     @api.response      = ::CleanApi::Response.new @api
   end
 
