@@ -37,4 +37,9 @@ describe 'dev' do
     response = GenericApi.render :plugin_test
     expect(response).to eq({ data: 'from_plugin', success: true, meta: { ip: '1.2.3.4' }})
   end
+
+  it 'expects csv as a response' do
+    response = GenericApi.render :send_csv
+    expect(response.split($/).first).to eq('name;email')
+  end
 end

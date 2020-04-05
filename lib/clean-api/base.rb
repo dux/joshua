@@ -1,5 +1,19 @@
 class CleanApi
-  INSTANCE ||= Struct.new 'CleanApiOpts', :action, :api, :request, :response, :params, :id, :opts, :method_opts, :development, :bearer
+  INSTANCE ||= Struct.new 'CleanApiOpts',
+    :action,
+    :api,
+    :bearer,
+    :development,
+    :id,
+    :method_opts,
+    :opts,
+    :params,
+    :raw,
+    :rack_response,
+    :request,
+    :response
+
+  attr_reader :api
 
   class << self
     # here we capture member & collection metods
@@ -56,8 +70,14 @@ class CleanApi
         path  = request.url.split(mount_on, 2).last.split('?').first.to_s
         parts = path.split('/')
         klass = parts.shift
-        api = render parts, class: klass, request: request, response: response, development: development
-        api.to_json + "\n"
+
+        response = render parts, class: klass, request: request, response: response, development: development
+
+        if response.is_a?(Hash)
+          response.to_json + "\n"
+        else
+          response
+        end
       end
     end
 
@@ -135,13 +155,14 @@ class CleanApi
     @api.bearer ||= request.env['HTTP_AUTHORIZATION'].to_s.split('Bearer ')[1] if request
 
     # other options
-    @api.params      = ::CleanHash::Indifferent.new @api.params
-    @api.opts        = ::CleanHash::Indifferent.new(opts|| {})
-    @api.response    = ::CleanApi::Response.new
-    @api.action      = @api.action.to_sym
-    @api.request     = request
-    @api.method_opts = self.class.opts.dig(@api.id ? :member : :collection, @api.action) || {}
-    @api.development = !!development
+    @api.action        = @api.action.to_sym
+    @api.request       = request
+    @api.method_opts   = self.class.opts.dig(@api.id ? :member : :collection, @api.action) || {}
+    @api.development   = !!development
+    @api.rack_response = response
+    @api.params        = ::CleanHash::Indifferent.new @api.params
+    @api.opts          = ::CleanHash::Indifferent.new(opts|| {})
+    @api.response      = ::CleanApi::Response.new @api
   end
 
   def message data
@@ -157,7 +178,7 @@ class CleanApi
       resolve_api_body
     end
 
-    response.render
+    @api.raw || response.render
   end
 
   def resolve_api_body &block
@@ -251,8 +272,16 @@ class CleanApi
     end
   end
 
-  def response
-    @api.response
+  def response content_type=nil
+    if block_given?
+      @api.raw = yield
+
+      if @api.rack_response
+        @api.rack_response.header['Content-Type'] = content_type || (@api.raw[0] == '{' ? 'application/json' : 'text/plain')
+      end
+    else
+      @api.response
+    end
   end
 
   def params

@@ -2,7 +2,8 @@
 
 class CleanApi
   class Response
-    def initialize
+    def initialize api
+      @api    = api
       @out    = {}
       @meta   = {}
       @errors = {}
@@ -12,10 +13,17 @@ class CleanApi
       meta key, value
     end
 
+    # forward header to rack_response.header
+    def header key, value
+      @api.rack_response.header[key] = value if @api.rack_response
+    end
+
+    # human readable response message
     def message value
       @message = value
     end
 
+    # api meta response, any data is allowed
     def meta key, value = nil
       if value
         @meta[key] = value
@@ -24,6 +32,7 @@ class CleanApi
       end
     end
 
+    # add api response error
     def error *args
       return @errors unless args[0]
 
@@ -51,6 +60,7 @@ class CleanApi
       !@data.nil?
     end
 
+    # render full api response
     def render
       {}.tap do |out|
         if @errors.keys.empty?

@@ -44,5 +44,14 @@ class GenericApi < ApplicationApi
     def anon_test
       @anonymous_ok
     end
+
+    def send_csv
+      out = []
+      out.push 'name;email'
+      out.push 'dux;foo@bar.baz'
+      out.push 'fox;bar@baz.baz'
+
+      response { out.join($/) }
+    end
   end
 end
