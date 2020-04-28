@@ -1,3 +1,6 @@
+# Coffee code example for chainable CleaApi access that is easy to read
+# fell free to compile to JS here https://coffeescript.org/#try
+#
 # just execute action and trigger Info.api() buy default
 # Api(path, opts)
 #
@@ -12,6 +15,9 @@
 #
 # silent on success, custom error func
 # Api(path, opts).silent().error(error_func)
+#
+# real life example: update product, on success to not show info, just redirect to product page
+# Api('product/123/update', {name: 'Foo', description: 'Bar', value: 5}).silent().follow()
 
 window.Api = (path, opts={}) ->
   if typeof(path) != 'string'

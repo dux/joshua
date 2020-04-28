@@ -98,8 +98,8 @@ describe 'tesing params' do
     it 'expects to report missing parameters' do
       response = UserApi.render :login
       expect(response[:error][:details]).to eq({
-        user: 'Argument required',
-        pass: 'Argument required'
+        user: 'Argument missing',
+        pass: 'Argument missing'
       })
     end
 

@@ -121,7 +121,7 @@ class CleanApi
     end
 
     def render action, opts={}
-      return error 'Action not defined' unless action.first
+      return error 'Action not defined' unless action[0]
 
       api_class =
       if klass = opts.delete(:class)
