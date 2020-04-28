@@ -61,13 +61,13 @@ class CleanApi
     # auto mount to a root
     # * display doc in a root
     # * call methods if possible /api/v1.comapny/1/show
-    def auto_mount request:, response:, mount_on: nil, development: false
+    def auto_mount request:, response:, mount_on: nil, bearer: nil, development: false
       mount_on = [request.base_url, mount_on].join('') unless mount_on.to_s.include?('//')
 
       if request.url == mount_on && request.request_method == 'GET'
         response.header['Content-Type'] = 'text/html'
 
-        Doc.render request: request
+        Doc.render request: request, bearer: bearer
       else
         response.header['Content-Type'] = 'application/json'
 
@@ -79,6 +79,7 @@ class CleanApi
         opts[:request]     = request
         opts[:response]    = response
         opts[:development] = development
+        opts[:bearer]      = bearer
 
         action =
         if body
@@ -90,13 +91,13 @@ class CleanApi
           #   "params": {}         # methos params
           # }
           opts[:params] = body['params'] || {}
-          opts[:bearer] = body['token']
+          opts[:bearer] = body['token'] if body['token']
           opts[:class]  = body['class']
 
           body['action']
         else
           opts[:params] = request.params || {}
-          opts[:bearer] = opts[:params]['api_token']
+          opts[:bearer] = opts[:params][:api_token] if opts[:params][:api_token]
 
           mount_on = mount_on+'/' unless mount_on.end_with?('/')
           path     = request.url.split(mount_on, 2).last.split('?').first.to_s
@@ -108,31 +109,38 @@ class CleanApi
 
         opts[:bearer] ||= request.env['HTTP_AUTHORIZATION'].to_s.split('Bearer ')[1]
 
-        response = render action, **opts
+        api_response = render action, **opts
 
-        if response.is_a?(Hash)
-          response.to_json + "\n"
+        if api_response.is_a?(Hash)
+          response.status = api_response[:status] if response
+          api_response.to_h
         else
-          response
+          api_response
         end
       end
     end
 
     def render action, opts={}
+      return error 'Action not defined' unless action.first
+
       api_class =
       if klass = opts.delete(:class)
+        # /api/_/foo
+        if klass == '_'
+          if CleanApi::DocSpecial.respond_to?(action.first)
+            return CleanApi::DocSpecial.send action.first.to_sym
+          else
+            return error 'Action %s not defined' % action.first
+          end
+        end
+
         klass = klass.split('/') if klass.is_a?(String)
         klass[klass.length-1] += '_api'
 
         begin
           klass.join('/').classify.constantize
         rescue NameError => e
-          if opts[:development]
-            error_print e
-            return error '%s (%s)' % [e.message, self]
-          else
-            return error 'API class not found'
-          end
+          return error 'API class "%s" not found' % klass
         end
       else
         self
@@ -188,8 +196,8 @@ class CleanApi
       response.error 'GET request is not allowed'
     else
       parse_api_params
-      parse_annotations
-      resolve_api_body
+      parse_annotations unless response.error?
+      resolve_api_body unless response.error?
     end
 
     @api.raw || response.render
@@ -202,8 +210,6 @@ class CleanApi
       execute_callback :before_all
 
       instance_exec &block if block
-
-      return if response.error?
 
       # if we have model defiend, we execute member otherwise collection
       type   = @api.id ? :member : :collection
@@ -257,7 +263,8 @@ class CleanApi
     for name, opts in @api.method_opts[:params]
       # enforce required
       if opts[:required] && @api.params[name].to_s == ''
-        response.error_detail name, 'Paramter is required'
+        response.error_detail name, 'Argument missing'
+        next
       end
 
       begin

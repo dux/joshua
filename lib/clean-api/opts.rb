@@ -100,6 +100,8 @@ class CleanApi
 
     # api method detailed description
     def detail data
+      return if data.to_s == ''
+
       if @method_type
         PARAMS.__add :detail, data
       else

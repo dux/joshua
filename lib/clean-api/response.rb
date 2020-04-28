@@ -3,10 +3,10 @@
 class CleanApi
   class Response
     def initialize api
-      @api    = api
-      @out    = {}
-      @meta   = {}
-      @errors = {}
+      @api         = api
+      @out         = {}
+      @meta        = {}
+      @errors      = {}
     end
 
     def []= key, value
@@ -14,8 +14,12 @@ class CleanApi
     end
 
     # forward header to rack_response.header
-    def header key, value
-      @api.rack_response.header[key] = value if @api.rack_response
+    def header *args
+      if args.first
+        @api.rack_response.header[args.first] = args[1] if @api.rack_response
+      else
+        @api.rack_response.header
+      end
     end
 
     # human readable response message
@@ -44,10 +48,12 @@ class CleanApi
     end
 
     def error?
-      !!@errors[:messages]
+      !!(@errors[:messages] || @errors[:details])
     end
 
     def error_detail name, desc
+      error '%s (%s)' % [desc, name]
+
       @errors[:details]     ||= {}
       @errors[:details][name] = desc
     end
@@ -73,6 +79,7 @@ class CleanApi
         out[:meta]    = @meta
         out[:message] = @message if @message
         out[:data]    = @data unless @data.nil?
+        out[:status]  = error? ? 400 : 200
       end
     end
   end

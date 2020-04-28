@@ -31,6 +31,9 @@ require_relative './clean-api/opts'
 require_relative './clean-api/base'
 require_relative './clean-api/error'
 require_relative './clean-api/response'
-require_relative './clean-api/doc'
+
+require_relative './doc/doc'
+require_relative './doc/special'
+
 
 

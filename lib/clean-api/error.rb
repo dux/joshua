@@ -21,12 +21,11 @@ class CleanApi
     end
 
     # show and render single error in class error format
+    # usually when API class not found
     def error text
-      api = new(:err)
-      api.resolve_api_body do
-        error text
-      end
-      api
+      out = Response.new nil
+      out.error text
+      out.render
     end
 
     def error_print error

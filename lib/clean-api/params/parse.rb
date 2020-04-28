@@ -19,7 +19,7 @@ class CleanApi
           if !opts[:default].nil?
             opts[:default]
           elsif opts[:required]
-            error 'Argument required'
+            error 'Argument missing'
           end
         else
           m = 'check_%s' % type
