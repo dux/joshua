@@ -66,15 +66,16 @@ class CleanApi
                   n.p '<b>TOOLS</b>'
                   n.div do |n|
                     n.push %[<p><a class="badge badge-light" href="#api_errors">Named errors</a></p>]
-                    n.push %[<p><a class="badge badge-light" href="#">Postman import URL</a></p>]
+                    n.push %[<p><a class="badge badge-light" href="#{mount_on}_/postman" target="capi_postman">Postman import URL</a></p>]
+                    n.push %[<p><a class="badge badge-light" href="#{mount_on}_/raw" target="capi_raw">Raw doc data</a></p>]
                   end
 
                   n.br
 
                   n.p '<b>API LIBRARIES</b>'
                   n.div do |n|
-                    n.push %[<a class="badge badge-light" href="#">Ruby</a>]
-                    n.push %[<a class="badge badge-light" href="#">Javascript</a>]
+                    n.push %[<a class="badge badge-light" href="https://github.com/dux/clean-api/blob/master/lib/misc/ruby_client.rb" target="capi_ruby">Ruby</a>]
+                    n.push %[<a class="badge badge-light" href="https://github.com/dux/clean-api/blob/master/lib/misc/api_example.coffee" target="capi_js">Javascript</a>]
                     n.push %[<a class="badge badge-light" href="#">Python</a>]
                     n.push %[<a class="badge badge-light" href="#">C#</a>]
                   end
@@ -83,7 +84,7 @@ class CleanApi
 
                   n.p '<b>RESOURCES</b>'
                   n.div do |n|
-                    n.push %[<a class="badge badge-light" href="http://vmrcre.org/web/scribe/home/-/blogs/why-rest-sucks">Why we only prefer POST?</a>]
+                    n.push %[<a class="badge badge-light" href="http://vmrcre.org/web/scribe/home/-/blogs/why-rest-sucks" target="capi_why">Why we only prefer POST?</a>]
                   end
                 end
               end

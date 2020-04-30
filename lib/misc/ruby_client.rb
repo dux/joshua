@@ -1,5 +1,3 @@
-require 'http'
-
 # api = CleanApiRemote.new 'http://localhost:4567/api', debug: true
 # api.company(1).index
 # api.call 'company/1/index'
@@ -7,6 +5,10 @@ require 'http'
 # api.call :company, 1, :index
 # api.success?
 # api.response
+
+require 'awesome_print'
+require 'http'
+
 class CleanApiRemote
   attr_reader :response
 
@@ -47,15 +49,4 @@ class CleanApiRemote
     !success?
   end
 end
-
-require 'awesome_print'
-
-# api = CleanApiRemote.new 'http://localhost:4567/api', debug: true
-# ap api.company(1).ivor
-# ap api.call 'company/1/index'
-# ap api.call [:company, 1, :index]
-# ap api.call :company, 1, :index
-# ap api.success?
-# ap api.response
-
 
