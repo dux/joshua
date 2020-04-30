@@ -1,7 +1,6 @@
 class CleanApi
   INSTANCE ||= Struct.new 'CleanApiOpts',
     :action,
-    :api,
     :bearer,
     :development,
     :id,

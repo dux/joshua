@@ -59,7 +59,7 @@ class CleanApi
     end
 
     def data value
-      @data = value
+      @data ||= value
     end
 
     def data?
