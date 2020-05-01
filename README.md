@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/dux/joshua/master/public/johua-tree.png" style="float: right;" />
+<img src="https://i.imgur.com/HWoUz5k.png" align="right" />
 
 # Joshua <small>&mdash; Fast Ruby API</small>
 
@@ -14,6 +14,52 @@ Joshua is opinionated [API](https://learn.g2.com/api) implementation for [Ruby](
 * Errors and messages are [localized](./params/type_errors.rb)
 
 <br />
+
+### Look and feel
+
+Notice how member and collections exist in separate namespace.
+
+```ruby
+class ModelApi < Joshua
+  rescue_from Policy::Error do |error|
+    error 403, 'Policy error: %s' % error.message
+  end
+
+  before do
+    @current_user = User.find_by token: @api.bearer
+  end
+
+  member do
+    def update
+    end
+  end
+
+  after do
+    response[:ip] = @api.request.ip
+  end
+end
+
+class UsersApi < ModelApi
+  collection do
+    def index
+    end
+
+    def create
+    end
+  end
+
+  member do
+    def update
+    end
+
+    def delete
+    end
+  end
+
+  def helper_metho
+  end
+end
+```
 
 ### Annotated example
 
@@ -186,14 +232,14 @@ end
 
 
 # Example api call with response
-UserApi.call :login, params: { user: 'foo', pass: 'bar' }
+UserApi.render :login, params: { user: 'foo', pass: 'bar' }
 # {
 #   success: true,
 #   message: 'login ok',
 #   meta: { ip: '127.0.0.1' }
 # }
 
-UserApi.call :login, params: { user: 'aaa', pass: 'bbb' }
+UserApi.render :login, params: { user: 'aaa', pass: 'bbb' }
 # {
 #   success: false,
 #   error: {
@@ -320,7 +366,7 @@ Assuming that `Joshua` mount point is `/api`
 
 ##### Example screenshot
 
-![Screenshot](https://raw.githubusercontent.com/dux/joshua/master/public/screen1.png)
+![Screenshot](https://i.imgur.com/i3bgVHG.png)
 
 <hr />
 
@@ -367,19 +413,27 @@ Methods avaiable on class level.
 Similar to Rails `rescue_from`. You can call manualy with `error :foo` or `error 404`, capture named errors and format response as you fit.
 
 ```ruby
-rescue_from :foo, 'Baz is angry'
-# in method
-def foo
-  error :foo
-end
+class UsersApi < Joshua
+  rescue_from :foo, 'Baz is angry'
 
-# capture Policy::Error and add custom formating
-rescue_from Policy::Error do |error|
-  error 403, 'Policy error: %s' % error.message
-end
-# in method
-def foo
-  @user.can.admin! # triggers Policy::Error, gets captured
+  member do
+    # in method
+    def foo
+      error :foo
+    end
+  end
+
+  # capture Policy::Error and add custom formating
+  rescue_from Policy::Error do |error|
+    error 403, 'Policy error: %s' % error.message
+  end
+
+  collection do
+    # in method
+    def foo
+      @user.can.admin! # triggers Policy::Error, gets captured
+    end
+  end
 end
 ```
 
@@ -706,7 +760,7 @@ post '/api*' do
 end
 ```
 
-#### Using rails
+#### Using [Ruby On Rals](https://rubyonrails.org/)
 
 ```ruby
 # config/routes.rb
