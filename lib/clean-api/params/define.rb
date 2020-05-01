@@ -8,6 +8,8 @@ class CleanApi
       def method_missing name, *args
         name = name.to_s
 
+        raise ArgumentError.new('! is not allowed in params') if name.include?('!')
+
         type, opts = args
 
         if type.is_a?(Hash)
@@ -16,17 +18,17 @@ class CleanApi
         end
 
         type = :string if type.nil?
+
         opts ||= {}
-
-        opts[:required] = true if name.sub! /!$/, ''
-        opts[:required] = true if opts.delete(:req)
-
         opts[:type] = type.to_s.dasherize.downcase.to_sym
+
+        opts[:required] = true if opts[:required].nil?
+        opts[:required] = false if name.sub! /\?$/, ''
+        opts[:required] = false if opts.delete(:optional)
 
         opts.merge!(type: :boolean, default: false) if opts[:type] == :false
         opts.merge!(type: :boolean, default: true) if opts[:type] == :true
-
-        # ap({name: name, args: args, opts: opts})
+        opts[:required] = false if opts[:type] == :boolean
 
         @opts[:params] ||= {}
         @opts[:params][name.to_sym] = opts

@@ -7,9 +7,9 @@ class UserApi < ModelApi
   collection do
     anonymous
     unsafe
-    params.user!
+    params.user
     params do
-      pass!
+      pass
     end
     def login
       if params.user == 'foo' && params.pass == 'bar'

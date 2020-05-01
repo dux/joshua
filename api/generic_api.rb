@@ -32,9 +32,9 @@ class GenericApi < ApplicationApi
     desc 'Passing params'
     detail "This will just pass params\n\n* first item\n* second item"
     params do
-      abc! default: :baz
+      abc? default: :baz
       foo String, req: true, default: :baz
-      bar
+      bar?
     end
     def param_test_2
       params.to_h

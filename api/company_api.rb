@@ -19,7 +19,7 @@ class CompanyApi < ModelApi
     desc 'Simple index'
     params do
       is_active false
-      country   :string
+      country?  :string
     end
     def index
       message 'all ok'
