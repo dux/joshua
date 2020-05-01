@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/dux/claan-api/master/public/johua-tree.png" style="float: right;" />
+
 # Clean API
 
 CleanAPI is opinionated [API](https://learn.g2.com/api) implementation for [Ruby](https://www.ruby-lang.org/en/) based clients, featuring automount for [rack](https://github.com/rack/rack) based clients.
@@ -319,7 +321,7 @@ Assuming that `CleanAPI` mount point is `/api`
 
 ##### Example screenshot
 
-![Screenshot](https://i.imgur.com/ePRWifu.png)
+![Screenshot](https://raw.githubusercontent.com/dux/claan-api/master/public/screen1.png)
 
 <hr />
 

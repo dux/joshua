@@ -10,10 +10,12 @@ require './spec/base'
 set :haml, { escape_html: false }
 
 API_CALL = proc do
-  ApplicationApi.auto_mount mount_on: '/api',
+  data = ApplicationApi.auto_mount mount_on: '/api',
     request: request,
     response: response,
     development: true
+
+  data.is_a?(Hash) ? data.to_json : data
 end
 
 get '/' do

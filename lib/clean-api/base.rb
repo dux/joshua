@@ -40,13 +40,14 @@ class CleanApi
       else
         data = auto_mount request: request, mount_on: '/', development: ENV['RACK_ENV'] == 'development'
 
-        if data[0] == '{'
+        if data.is_a?(Hash)
           [
             200,
             { 'Content-Type' => 'application/json', 'Cache-Control'=>'private; max-age=0' },
-            [data]
+            [data.to_json]
           ]
         else
+          data = data.to_s
           [
             200,
             { 'Content-Type' => 'text/html', 'Cache-Control'=>'public; max-age=3600' },
@@ -60,15 +61,15 @@ class CleanApi
     # auto mount to a root
     # * display doc in a root
     # * call methods if possible /api/v1.comapny/1/show
-    def auto_mount request:, response:, mount_on: nil, bearer: nil, development: false
+    def auto_mount request:, response: nil, mount_on: nil, bearer: nil, development: false
       mount_on = [request.base_url, mount_on].join('') unless mount_on.to_s.include?('//')
 
       if request.url == mount_on && request.request_method == 'GET'
-        response.header['Content-Type'] = 'text/html'
+        response.header['Content-Type'] = 'text/html' if response
 
         Doc.render request: request, bearer: bearer
       else
-        response.header['Content-Type'] = 'application/json'
+        response.header['Content-Type'] = 'application/json' if response
 
         body     = request.body.read.to_s
         body     = body[0] == '{' ? JSON.parse(body) : nil
