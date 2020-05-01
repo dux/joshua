@@ -1,6 +1,6 @@
 require 'date'
 
-class CleanApi
+class Joshua
   module Params
     class Parse
       # params.is_active :boolean, default: false

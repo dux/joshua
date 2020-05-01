@@ -8,7 +8,7 @@ module ApiModuleClasic
   end
 end
 
-CleanApi.plugin :test_1 do
+Joshua.plugin :test_1 do
   collection do
     def plugin_test
       'from_plugin'

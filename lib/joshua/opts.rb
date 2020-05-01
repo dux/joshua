@@ -1,4 +1,4 @@
-class CleanApi
+class Joshua
   PARAMS        ||= Params::Define.new
   ANNOTATIONS   ||= {}
   OPTS            = {}
@@ -12,7 +12,7 @@ class CleanApi
 
     # if you want to make API DOC public use "documented"
     def documented
-      if self == CleanApi
+      if self == Joshua
         DOCUMENTED.map(&:to_s).sort.map(&:constantize)
       else
         DOCUMENTED.push self unless DOCUMENTED.include?(self)
@@ -144,8 +144,8 @@ class CleanApi
     end
 
     # simplified module include, masked as plugin
-    # CleanApi.plugin :foo do ...
-    # CleanApi.plugin :foo
+    # Joshua.plugin :foo do ...
+    # Joshua.plugin :foo
     def plugin name, &block
       if block_given?
         # if block given, define a plugin

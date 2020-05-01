@@ -19,7 +19,7 @@ end
 
 desc 'Dump raw JSON from fixtures'
 task dump: :env do
-  for klass in CleanApi::ACTIVATED
+  for klass in Joshua::ACTIVATED
     puts klass
       ap klass.opts
     puts

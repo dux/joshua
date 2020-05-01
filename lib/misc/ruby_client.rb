@@ -1,4 +1,4 @@
-# api = CleanApiRemote.new 'http://localhost:4567/api', debug: true
+# api = JoshuaRemote.new 'http://localhost:4567/api', debug: true
 # api.company(1).index
 # api.call 'company/1/index'
 # api.call [:company, 1, :index]
@@ -9,7 +9,7 @@
 require 'awesome_print'
 require 'http'
 
-class CleanApiRemote
+class JoshuaRemote
   attr_reader :response
 
   def initialize root, debug: false
@@ -35,7 +35,7 @@ class CleanApiRemote
     end
 
     path = [@root, path].join('/')
-    puts 'CleanApi: %s' % path if @debug
+    puts 'Joshua: %s' % path if @debug
 
     @path     = []
     @response = JSON.parse HTTP.get(path).to_s

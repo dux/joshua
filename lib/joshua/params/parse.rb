@@ -1,4 +1,4 @@
-class CleanApi
+class Joshua
   module Params
     class Parse
       class << self
@@ -45,7 +45,7 @@ class CleanApi
       end
 
       def error desc
-        raise CleanApi::Error, desc
+        raise Joshua::Error, desc
       end
 
       def hard_error desc

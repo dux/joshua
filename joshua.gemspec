@@ -2,11 +2,11 @@ gem_files = [:lib]
   .inject([]) { |t, el| t + `find ./#{el}`.split($/) }
   .push './.version'
 
-Gem::Specification.new 'clean-api' do |gem|
+Gem::Specification.new 'joshua' do |gem|
   gem.version     = File.read('.version')
-  gem.summary     = 'Clean API'
+  gem.summary     = 'Joshua'
   gem.description = 'Ruby language based, framework agnostic API request/response lib'
-  gem.homepage    = 'http://github.com/dux/clean-api'
+  gem.homepage    = 'http://github.com/dux/joshua'
   gem.license     = 'MIT'
   gem.author      = 'Dino Reic'
   gem.email       = 'rejotl@gmail.com'

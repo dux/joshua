@@ -1,6 +1,6 @@
 # Api response is constructed from this object
 
-class CleanApi
+class Joshua
   class Response
     def initialize api
       @api         = api

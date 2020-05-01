@@ -1,10 +1,10 @@
-class CleanApi
+class Joshua
   module Doc
     extend self
 
     ICONS = {
       github:  {
-        url:   'https://github.com/dux/clean-api',
+        url:   'https://github.com/dux/joshua',
         image: '<path d="M11.999 1.271C5.925 1.271 1 6.196 1 12.273c0 4.859 3.152 8.982 7.523 10.437.55.1.751-.239.751-.53l-.015-1.872c-3.06.666-3.706-1.474-3.706-1.474-.5-1.271-1.221-1.609-1.221-1.609-.999-.683.075-.668.075-.668 1.105.077 1.685 1.133 1.685 1.133.981 1.681 2.575 1.196 3.202.914.1-.711.384-1.196.698-1.471-2.442-.277-5.011-1.221-5.011-5.436 0-1.201.429-2.183 1.133-2.952-.114-.278-.491-1.397.108-2.911 0 0 .923-.296 3.025 1.127A10.56 10.56 0 0 1 12 6.591c.935.004 1.876.127 2.754.37 2.1-1.423 3.022-1.127 3.022-1.127.6 1.514.223 2.633.11 2.911.705.769 1.131 1.751 1.131 2.952 0 4.225-2.573 5.155-5.023 5.427.395.34.747 1.011.747 2.038 0 1.471-.014 2.657-.014 3.018 0 .293.199.636.756.528C19.851 21.251 23 17.13 23 12.273c0-6.077-4.926-11.002-11.001-11.002z"></path>',
       },
       twitter: {
@@ -35,7 +35,7 @@ class CleanApi
 
       tag.html do |n|
         n.head  do |n|
-          n.title 'CleanAPI Tester'
+          n.title 'Joshua Tester'
           n.link({ href: "https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,800,900&display=swap",  rel:"stylesheet" })
           n.link({ rel:"stylesheet", href:"https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" })
           n.script({ src: 'https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js' })
@@ -47,7 +47,7 @@ class CleanApi
             n._container do |n|
               n.push top_icons
               n.push %[<button id="bearer_button" onclick="AuthButton.set()" class="btn btn-sm btn-outline-primary" style="float: right; margin-top: 15px; margin-right: 20px;">-</button>]
-              n.h1({ class: :nav}) { %[<a href="#top">CleanApi &nbsp; <gray>Docs</gray></a>] }
+              n.h1({ class: :nav}) { %[<a href="#top">Joshua &nbsp; <gray>Docs</gray></a>] }
             end
           end
 
@@ -74,8 +74,8 @@ class CleanApi
 
                   n.p '<b>API LIBRARIES</b>'
                   n.div do |n|
-                    n.push %[<a class="badge badge-light" href="https://github.com/dux/clean-api/blob/master/lib/misc/ruby_client.rb" target="capi_ruby">Ruby</a>]
-                    n.push %[<a class="badge badge-light" href="https://github.com/dux/clean-api/blob/master/lib/misc/api_example.coffee" target="capi_js">Javascript</a>]
+                    n.push %[<a class="badge badge-light" href="https://github.com/dux/joshua/blob/master/lib/misc/ruby_client.rb" target="capi_ruby">Ruby</a>]
+                    n.push %[<a class="badge badge-light" href="https://github.com/dux/joshua/blob/master/lib/misc/api_example.coffee" target="capi_js">Javascript</a>]
                     n.push %[<a class="badge badge-light" href="#">Python</a>]
                     n.push %[<a class="badge badge-light" href="#">C#</a>]
                   end
@@ -122,7 +122,7 @@ class CleanApi
     # left side navigation
     def left_nav
       tag.div do |n|
-        CleanApi.documented.each do |name|
+        Joshua.documented.each do |name|
           n.a({ class:'btn btn-outline-info btn-sm', style: '-font-size: 14px; margin-bottom: 10px;', href: '#%s' % name}) do |n|
             icon = name.opts.dig(:opts, :icon)
             n.push self.icon icon, size: 20 if icon
@@ -137,7 +137,7 @@ class CleanApi
     # render doc for all documented classes
     def index
       tag.div do |n|
-        for @klass in CleanApi.documented
+        for @klass in Joshua.documented
           @opts = @klass.opts
           icon = @opts.dig(:opts, :icon)
 

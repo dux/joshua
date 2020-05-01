@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    clean-api (0.4.5)
+    joshua (0.4.5)
       dry-inflector
       json
 
@@ -54,9 +54,9 @@ PLATFORMS
 DEPENDENCIES
   awesome_print
   byebug
-  clean-api!
   clean-hash
   html-tag
+  joshua!
   puma
   rspec
   sinatra

@@ -1,4 +1,4 @@
-class CleanApi
+class Joshua
   class Error < StandardError
   end
 
@@ -32,7 +32,7 @@ class CleanApi
       return if ENV['RACK_ENV'] == 'test'
 
       puts
-      puts 'CleanApi error dump'.red
+      puts 'Joshua error dump'.red
       puts '---'
       puts '%s: %s' % [error.class, error.message]
       puts '---'
@@ -55,7 +55,7 @@ class CleanApi
       return
     end
 
-    raise CleanApi::Error, desc
+    raise Joshua::Error, desc
   end
 
 end

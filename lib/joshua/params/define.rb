@@ -1,4 +1,4 @@
-class CleanApi
+class Joshua
   module Params
     class Define
       def initialize

@@ -1,4 +1,4 @@
-class ApplicationApi < CleanApi
+class ApplicationApi < Joshua
 
   base '/api'
 

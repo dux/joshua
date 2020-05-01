@@ -1,4 +1,4 @@
-require_relative '../lib/clean-api'
+require_relative '../lib/joshua'
 
 require_relative '../api/application_api'
 require_relative '../api/generic_api'

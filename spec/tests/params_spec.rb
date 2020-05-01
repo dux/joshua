@@ -1,11 +1,11 @@
 require_relative '../loader'
 
 describe 'tesing params' do
-  let!(:parse) { CleanApi::Params::Parse.new }
+  let!(:parse) { Joshua::Params::Parse.new }
 
   context 'global checks and' do
     it 'raises error on not existing required attribute' do
-      expect { parse.check :integer, nil, req: true }.to raise_error CleanApi::Error
+      expect { parse.check :integer, nil, req: true }.to raise_error Joshua::Error
       expect { parse.check :wtf, true }.to raise_error StandardError
     end
   end
@@ -18,7 +18,7 @@ describe 'tesing params' do
       expect(parse.check :boolean, 1).to eq true
       expect(parse.check :boolean, 'on').to eq true
       expect(parse.check :boolean, nil, default: false).to eq false
-      expect { parse.check :boolean, 'aaa' }.to raise_error CleanApi::Error
+      expect { parse.check :boolean, 'aaa' }.to raise_error Joshua::Error
     end
 
     it 'integer' do
@@ -26,12 +26,12 @@ describe 'tesing params' do
       expect(parse.check :integer, '123').to eq 123
       expect(parse.check :integer, 0).to eq 0
       expect(parse.check :integer, '0').to eq 0
-      expect { parse.check :integer, nil, req: true }.to raise_error CleanApi::Error
+      expect { parse.check :integer, nil, req: true }.to raise_error Joshua::Error
       expect(parse.check :integer, nil).to eq nil
       expect(parse.check :integer, nil, default: 1).to eq 1
 
-      expect { parse.check :integer, 100, max: 99  }.to raise_error CleanApi::Error
-      expect { parse.check :integer, 99,  min: 100 }.to raise_error CleanApi::Error
+      expect { parse.check :integer, 100, max: 99  }.to raise_error Joshua::Error
+      expect { parse.check :integer, 99,  min: 100 }.to raise_error Joshua::Error
     end
 
     it 'string' do
@@ -46,22 +46,22 @@ describe 'tesing params' do
       expect(parse.check :float, 1.2345, round: 2).to eq 1.23
       expect(parse.check :float, nil, round: 2).to eq nil
 
-      expect { parse.check :float, 100, max: 99  }.to raise_error CleanApi::Error
-      expect { parse.check :float, 99,  min: 100 }.to raise_error CleanApi::Error
+      expect { parse.check :float, 100, max: 99  }.to raise_error Joshua::Error
+      expect { parse.check :float, 99,  min: 100 }.to raise_error Joshua::Error
     end
 
     it 'date' do
       expect(parse.check :date, '1.2.2345.').to eq DateTime.parse('1.2.2345.')
       expect(parse.check :date, '1.2.2345. 13:34').to eq DateTime.parse('1.2.2345.')
-      expect { parse.check :date, '1.2.2345.', min: '1.2.3345.' }.to raise_error CleanApi::Error
-      expect { parse.check :date, '1.2.2345.', max: '1.2.1345.' }.to raise_error CleanApi::Error
+      expect { parse.check :date, '1.2.2345.', min: '1.2.3345.' }.to raise_error Joshua::Error
+      expect { parse.check :date, '1.2.2345.', max: '1.2.1345.' }.to raise_error Joshua::Error
     end
 
     it 'date_time' do
       expect(parse.check :date_time, '1.2.2345.').to eq DateTime.parse('1.2.2345.')
       expect(parse.check :date_time, '1.2.2345. 13:34').to eq DateTime.parse('1.2.2345 13:34')
-      expect { parse.check :date, '1.2.2345.', min: '1.2.3345.' }.to raise_error CleanApi::Error
-      expect { parse.check :date, '1.2.2345.', max: '1.2.1345.' }.to raise_error CleanApi::Error
+      expect { parse.check :date, '1.2.2345.', min: '1.2.3345.' }.to raise_error Joshua::Error
+      expect { parse.check :date, '1.2.2345.', max: '1.2.1345.' }.to raise_error Joshua::Error
     end
 
     it 'hash' do
@@ -77,7 +77,7 @@ describe 'tesing params' do
 
     it 'checks values in params' do
       expect(parse.check :string, 'red', values: ['red', 'green', 'blue']).to eq 'red'
-      expect { parse.check :string, 'red', values: ['green', 'blue'] }.to raise_error CleanApi::Error
+      expect { parse.check :string, 'red', values: ['green', 'blue'] }.to raise_error Joshua::Error
     end
   end
 

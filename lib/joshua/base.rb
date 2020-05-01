@@ -1,5 +1,5 @@
-class CleanApi
-  INSTANCE ||= Struct.new 'CleanApiOpts',
+class Joshua
+  INSTANCE ||= Struct.new 'JoshuaOpts',
     :action,
     :bearer,
     :development,
@@ -127,8 +127,8 @@ class CleanApi
       if klass = opts.delete(:class)
         # /api/_/foo
         if klass == '_'
-          if CleanApi::DocSpecial.respond_to?(action.first)
-            return CleanApi::DocSpecial.send action.first.to_sym
+          if Joshua::DocSpecial.respond_to?(action.first)
+            return Joshua::DocSpecial.send action.first.to_sym
           else
             return error 'Action %s not defined' % action.first
           end
@@ -184,7 +184,7 @@ class CleanApi
     @api.rack_response = response
     @api.params        = ::CleanHash::Indifferent.new params
     @api.opts          = ::CleanHash::Indifferent.new opts
-    @api.response      = ::CleanApi::Response.new @api
+    @api.response      = ::Joshua::Response.new @api
   end
 
   def message data
@@ -216,17 +216,17 @@ class CleanApi
 
       execute_callback 'before_%s' % type
       api_method = '_api_%s_%s' % [type, @api.action]
-      raise CleanApi::Error, "Api method #{type}:#{@api.action} not found" unless respond_to?(api_method)
+      raise Joshua::Error, "Api method #{type}:#{@api.action} not found" unless respond_to?(api_method)
       data = send api_method
       response.data data unless response.data?
 
       # after blocks
       execute_callback 'after_%s' % type
-    rescue CleanApi::Error => error
+    rescue Joshua::Error => error
       # controlled error raised via error "message", ignore
       response.error error.message
     rescue => error
-      CleanApi.error_print error
+      Joshua.error_print error
 
       block = RESCUE_FROM[error.class] || RESCUE_FROM[:all]
 
@@ -258,7 +258,7 @@ class CleanApi
   def parse_api_params
     return unless @api.method_opts[:params]
 
-    parse = CleanApi::Params::Parse.new
+    parse = Joshua::Params::Parse.new
 
     for name, opts in @api.method_opts[:params]
       # enforce required
@@ -270,7 +270,7 @@ class CleanApi
       begin
         # check and coerce value
         @api.params[name] = parse.check opts[:type], @api.params[name], opts
-      rescue CleanApi::Error => error
+      rescue Joshua::Error => error
         # add to details if error found
         response.error_detail name, error.message
       end
