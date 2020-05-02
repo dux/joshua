@@ -16,17 +16,6 @@ class Joshua
   attr_reader :api
 
   class << self
-    # here we capture member & collection metods
-    def method_added name
-      return if name.to_s.start_with?('_api_')
-      return unless @method_type
-
-      set @method_type, name, PARAMS.fetch_and_clear_opts
-
-      alias_method "_api_#{@method_type}_#{name}", name
-      remove_method name
-    end
-
     # perform auto_mount from a rake call
     def call env
       request = Rack::Request.new env

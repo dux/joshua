@@ -33,7 +33,7 @@ class GenericApi < ApplicationApi
     detail "This will just pass params\n\n* first item\n* second item"
     params do
       abc? default: :baz
-      foo String, req: true, default: :baz
+      foo String, req: true
       bar?
     end
     def param_test_2

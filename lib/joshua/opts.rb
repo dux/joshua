@@ -1,11 +1,12 @@
 class Joshua
-  PARAMS        ||= Params::Define.new
   ANNOTATIONS   ||= {}
   OPTS            = {}
   PLUGINS         = {}
   DOCUMENTED      = []
 
   class << self
+    @@params = Params::Define.new
+
     def base what
       set :opts, :base, what
     end
@@ -33,7 +34,7 @@ class Joshua
     def annotation name, &block
       ANNOTATIONS[name] = block
       self.define_singleton_method name do |*args|
-        PARAMS.__add_annotation name, args
+        @@params.add_annotation name, args
       end
     end
 
@@ -69,13 +70,13 @@ class Joshua
           Params::Parse.define name, &block
         else
           only_in_api_methods!
-          PARAMS.send *args
+          @@params.send *args
         end
       elsif block
-        PARAMS.instance_eval &block
+        @@params.instance_eval &block
       else
         only_in_api_methods!
-        PARAMS
+        @@params
       end
     end
 
@@ -92,7 +93,7 @@ class Joshua
     # api method description
     def desc data
       if @method_type
-        PARAMS.__add :desc, data
+        @@params.add_generic :desc, data
       else
         set :opts, :desc, data
       end
@@ -103,7 +104,7 @@ class Joshua
       return if data.to_s == ''
 
       if @method_type
-        PARAMS.__add :detail, data
+        @@params.add_generic :detail, data
       else
         set :opts, :detail, data
       end
@@ -112,7 +113,7 @@ class Joshua
     # method in available for GET requests as well
     def gettable
       if @method_type
-        PARAMS.__add :gettable
+        @@params.add_generic :gettable
       else
         raise ArgumentError.new('gettable can only be set on methods')
       end
@@ -120,8 +121,8 @@ class Joshua
 
     # allow methods without @api.bearer token set
     def unsafe
-        if @method_type
-        PARAMS.__add :unsafe
+      if @method_type
+        @@params.add_generic :unsafe
       else
         raise ArgumentError.new('Only api methods can be unsafe')
       end
@@ -181,6 +182,17 @@ class Joshua
       end
 
       out
+    end
+
+    # here we capture member & collection metods
+    def method_added name
+      return if name.to_s.start_with?('_api_')
+      return unless @method_type
+
+      set @method_type, name, @@params.fetch_and_clear_opts
+
+      alias_method "_api_#{@method_type}_#{name}", name
+      remove_method name
     end
 
     private

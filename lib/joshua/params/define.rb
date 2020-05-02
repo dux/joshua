@@ -40,11 +40,11 @@ class Joshua
           .tap { @opts = {} }
       end
 
-      def __add name, value=true
+      def add_generic name, value=true
         @opts[name] = value
       end
 
-      def __add_annotation name, data
+      def add_annotation name, data
         @opts[:annotations] ||= {}
         @opts[:annotations][name] = data
       end

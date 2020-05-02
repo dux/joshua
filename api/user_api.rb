@@ -7,6 +7,7 @@ class UserApi < ModelApi
   collection do
     anonymous
     unsafe
+    detail "For demo purposes, use user=foo and pass=bar"
     params.user
     params do
       pass

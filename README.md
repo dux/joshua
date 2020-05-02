@@ -56,7 +56,7 @@ class UsersApi < ModelApi
     end
   end
 
-  def helper_metho
+  def helper_method
   end
 end
 ```
