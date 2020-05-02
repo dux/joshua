@@ -76,7 +76,7 @@ class Joshua
 
                   n.p '<b>API LIBRARIES</b>'
                   n.div do |n|
-                    n.push %[<a class="badge badge-light" href="https://github.com/dux/joshua/blob/master/lib/misc/ruby_client.rb" target="capi_ruby">Ruby</a>]
+                    n.push %[<a class="badge badge-light" href="https://github.com/dux/joshua/blob/master/lib/client/ruby/client" target="capi_ruby">Ruby</a>]
                     n.push %[<a class="badge badge-light" href="https://github.com/dux/joshua/blob/master/lib/misc/api_example.coffee" target="capi_js">Javascript</a>]
                     n.push %[<a class="badge badge-light" href="#">Python</a>]
                     n.push %[<a class="badge badge-light" href="#">C#</a>]

@@ -41,10 +41,20 @@ end
 
 class UsersApi < ModelApi
   collection do
-    def index
+    desc   'Login test'
+    detail 'user + pass = foo + bar'
+    params do
+      user
+      pass
     end
+    def login
+      if params.user == 'foo' && params.pass == 'bar'
+        message 'Login ok'
 
-    def create
+        'token-abcdefg'
+      else
+        error 'Bad user name or pass'
+      end
     end
   end
 
@@ -63,7 +73,7 @@ end
 
 ### Annotated example
 
-Featuring **all** you have to know to start building your APIs using Joshua (you don't even have to read rest of the documentation :)
+Featuring **nearly all** you have to know to start building your APIs using Joshua.
 
 ```ruby
 # in ApplicationApi we will define rules that will reflect all other API classes
@@ -583,19 +593,25 @@ You can use that information not to check for bearer auth token.
   * custom - `:email`, `:url`, `:oib`, `:point` (geo point)
   * you can as well <a href="#params">define your custom type</a>
 
-## API method methods
+## API methods - inline methods
+
+Joshua specific methods you can call inside API methods (ones in `member` or `collection` blocks)
 
 ### error
 
 If you want to manualy trigger errors
 
 ```ruby
+rescue_from :foo do |error|
+  error 403, 'Policy error'
+end
+
 def foo
   # trigger named erorr
-  error :foo
+  error :foo       # { success: false, code: 403, error: { messages: ['Policy error'] }}
   
   # default response status is 400
-  error 'foo'      # { success: false, code: 400, error: { messages: ['foo'] }}
+  error 'foo bar'      # { success: false, code: 400, error: { messages: ['foo bar'] }}
   
   # you can define response status
   error 404, 'foo' # { success: false, code: 404, error: { messages: ['foo'] }}
@@ -811,3 +827,7 @@ post '/api/users/index' do
   my_format_api_response result
 end
 ```
+
+## Testing
+
+Load ruby client with `require 'joshua/client'`

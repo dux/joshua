@@ -6,10 +6,9 @@
 # api.success?
 # api.response
 
-require 'awesome_print'
 require 'http'
 
-class JoshuaRemote
+class JoshuaClient
   attr_reader :response
 
   def initialize root, debug: false
