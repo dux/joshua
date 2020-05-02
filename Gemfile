@@ -2,10 +2,8 @@ source 'http://rubygems.org'
 
 gemspec
 
-gem 'clean-hash'
-
 group :default do
-  gem 'awesome_print'
+  gem 'amazing_print'
   gem 'byebug'
 end
 
@@ -16,5 +14,4 @@ end
 group :web do
   gem 'puma'
   gem 'sinatra'
-  gem 'html-tag'
 end

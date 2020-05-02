@@ -298,12 +298,18 @@ but you can respond with anything you like
 
 ### Automatic routing
 
-Requests are directly maped to ruby methods. Example will say it all
+Requests are directly maped to ruby methods
 
 Routes can have max 3 elements.
 
-* 2 elements &rarr; class + collection method
-* 3 elements &rarr; class + id + member method
+* **2 elements, "collection" routes without rosource indentifier**
+  <br>
+  class / collection method
+* ***3 elements***
+  <br>
+  class / resource-id / member method
+
+Example will say it all
 
 ```ruby
 class UsersApi
@@ -324,7 +330,8 @@ end
 
 module Parent
   class Child
-    collection do
+    member do
+      # Note that you separate modules/classes with a dot.
       # /api/parent.child/:id/nested
       def nested
       end
@@ -333,13 +340,7 @@ module Parent
 end
 ```
 
-* Route to access user login method `/api/users/login`
-* Route to access user update `/api/users/123/update`
-* Route to access nested `/api/parent.child/123/nested`.
-  <br />
-  Note that you separate modules/classes with a dot.
-
-It is possible to have custom routes as `/api/:company/:class/:id/:method` etc but you have to configure that manualy. This is what you get "out of the box" by `Joshua.auto_mount`
+It is possible to have custom routes as `/api/:company/:class/:id/:method` etc but you have to configure that manualy. This is what you get "out of the box" by `auto_mount`
 
 This is **ALL** you have to know about routing.
 
@@ -360,7 +361,7 @@ end
 
 Assuming that `Joshua` mount point is `/api`
 
-* Interactive HTML documentation will be on `/api`
+* You will find interactive HTML documentation on `/api`
 * RAW JSON is available on `/api/_/raw`
 * [Postman](https://www.postman.com/) import URL is available on `/api/_/postman`
 
@@ -441,28 +442,52 @@ end
 
 ```ruby
 # define method annotation that will be run before the method executes
-annotation :anonymous do
-  @anonymous_allowed = true
+annotation :let_guests_in! do
+  @guets_allowed = true
+end
+
+before do
+  # before filter picks up annotation and can be used in logic
+  error 'Guest access not allowed' unless @user || @guets_allowed
+end
+
+collection do
+  let_guests_in! # annotation used
+  def login
+    error 'This will never trigger' unless @user || @guets_allowed
+    # ...
+  end
 end
 ```
-
-#### Params
+<a name="#params"></a>
+#### Params - define custom type
 
 ```ruby
 # define custom paramter called label
 # that will allow only characters, with max length of 15
-params :label do |value, opts|
-  error 'Label is not in the right format' unless value =~ /^\w{1,15}$/
+params :locale do |value, opts|
+  # allow 'en' or 'en-gb'
+  error 'Length should be 2 or max 5 chars' unless [2, 5].include?(value.
+  error 'Local is not in the right format' unless value =~ /^[\w\-]+$/
+end
+
+memeber do
+  params do
+    projet_locale :locale
+  end
+  def project
+    # ...
+  end
 end
 ```
 
 #### Before and after & members and collections
 
 * If defined in root, `before` and `after` filters fill be triggerd on every API method call.
-* `member` and `collection` will group API methods that.
+*  `before` and `after` filters nested in `member` and `collection` will be run only in `member` and `collection`.
 
 ```ruby
-class UserAPI < Joshua
+class TestApi < Joshua
   # before block wil be executed before any method call
   before do
     @num = 1
@@ -517,47 +542,46 @@ You can use that information not to check for bearer auth token.
 * you can define params directly on the params metod or you can pass as a block
 * every param can have `optional: true` or end name with `?`
 
-```ruby
-# inline
-params :full_name
+  ```ruby
+  # inline
+  params :full_name, min: 2, max: 40
 
-# inline optional
-params.full_name?                        # default String, required: false
-params.full_name String, required: false # same
-params.full_name String, optional: true # same
+  # inline optional
+  params.full_name?                        # default String, required: false
+  params.full_name String, required: false # same
+  params.full_name String, optional: true # same
 
-# as a block
-params do
-  user_email? :email                 # type: :email, required: false
-  user_email :email, req: true       # type: :email, required: true
-  user_email :email, required: true  # type: :email, required: true
-end
-```
+  # as a block
+  params do
+    user_email? :email                 # type: :email, required: false
+    user_email :email, req: true       # type: :email, required: true
+    user_email :email, required: true  # type: :email, required: true
+  end
+  ```
 
 * every param can have `default:` value that will be applies if value is `blank?`
 * min and max are available for Integer, Float
 
-```ruby
-params do
-  price Integer, min: 20, max: 100000, default: 1000
-end
-```
+  ```ruby
+  params do
+    price Integer, min: 20, max: 100000, default: 1000
+  end
+  ```
 
 * boolean types can be defined in 3 ways
 
-```ruby
-params do
-  is_active :boolean # { type: :boolean, default: false }
-  is_active false    # { type: :boolean, default: false }
-  is_active true     # { type: :boolean, default: true }
-end
-```
+  ```ruby
+  params do
+    is_active :boolean # { type: :boolean, default: false }
+    is_active false    # { type: :boolean, default: false }
+    is_active true     # { type: :boolean, default: true }
+  end
+  ```
 
 * many supported types and you can define your own types
   * native - `:integer`, `:float`, `:date`, `:datetime`, `:boolean`, `:hash`
   * custom - `:email`, `:url`, `:oib`, `:point` (geo point)
-
-To Define your custom type
+  * you can as well <a href="#params">define your custom type</a>
 
 ## API method methods
 

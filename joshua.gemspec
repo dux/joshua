@@ -16,4 +16,7 @@ Gem::Specification.new 'joshua' do |gem|
 
   gem.add_runtime_dependency 'dry-inflector'
   gem.add_runtime_dependency 'json'
+  gem.add_runtime_dependency 'html-tag'
+  gem.add_runtime_dependency 'clean-hash'
+  gem.add_runtime_dependency 'rack'
 end

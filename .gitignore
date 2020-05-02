@@ -1,3 +1,4 @@
 *.gem
 tmp/
 .byebug_history
+Gemfile.lock

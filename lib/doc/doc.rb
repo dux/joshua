@@ -51,6 +51,8 @@ class Joshua
             end
           end
 
+          n.img src:"https://i.imgur.com/HWoUz5k.png", style: 'width: 40px; z-index: 1; position: absolute; top: 10px; left: 50%;', onclick: "window.open('https://github.com/dux/joshua')"
+
           n.push modal_dialog
 
           n._container do |n|
