@@ -1,5 +1,13 @@
 class Joshua
-  INSTANCE ||= Struct.new 'JoshuaOpts',
+  class Error < StandardError
+  end
+
+  ANNOTATIONS   ||= {}
+  RESCUE_FROM   ||= {}
+  OPTS          ||= {}
+  PLUGINS       ||= {}
+  DOCUMENTED    ||= []
+  INSTANCE      ||= Struct.new 'JoshuaOpts',
     :action,
     :bearer,
     :development,
@@ -14,149 +22,6 @@ class Joshua
     :uid
 
   attr_reader :api
-
-  class << self
-    # perform auto_mount from a rake call
-    def call env
-      request = Rack::Request.new env
-
-      if request.path == '/favicon.ico'
-        [
-          200,
-          { 'Cache-Control'=>'public; max-age=1000000' },
-          [Doc.misc_file('favicon.png')]
-        ]
-      else
-        data = auto_mount request: request, mount_on: '/', development: ENV['RACK_ENV'] == 'development'
-
-        if data.is_a?(Hash)
-          [
-            200,
-            { 'Content-Type' => 'application/json', 'Cache-Control'=>'private; max-age=0' },
-            [data.to_json]
-          ]
-        else
-          data = data.to_s
-          [
-            200,
-            { 'Content-Type' => 'text/html', 'Cache-Control'=>'public; max-age=3600' },
-            [data]
-          ]
-        end
-      end
-    end
-
-    # ApplicationApi.auto_mount request: request, response: response, mount_on: '/api', development: true
-    # auto mount to a root
-    # * display doc in a root
-    # * call methods if possible /api/v1.comapny/1/show
-    def auto_mount request:, response: nil, mount_on: nil, bearer: nil, development: false
-      mount_on = [request.base_url, mount_on].join('') unless mount_on.to_s.include?('//')
-
-      if request.url == mount_on && request.request_method == 'GET'
-        response.header['Content-Type'] = 'text/html' if response
-
-        Doc.render request: request, bearer: bearer
-      else
-        response.header['Content-Type'] = 'application/json' if response
-
-        body     = request.body.read.to_s
-        body     = body[0] == '{' ? JSON.parse(body) : nil
-
-        # class: klass, params: params, bearer: bearer, request: request, response: response, development: development
-        opts = {}
-        opts[:request]     = request
-        opts[:response]    = response
-        opts[:development] = development
-        opts[:bearer]      = bearer
-
-        action =
-        if body
-          # {
-          #   "id": 'foo',         # unique ID that will be returned, as required by JSON RPC spec
-          #   "class": 'v1/users', # v1/users => V1::UsersApi
-          #   "action": 'index',   # "index' or "6/info" or [6, "info"]
-          #   "token": 'ab12ef',   # api_token (bearer)
-          #   "params": {}         # methos params
-          # }
-          opts[:params] = body['params'] || {}
-          opts[:bearer] = body['token'] if body['token']
-          opts[:class]  = body['class']
-
-          body['action']
-        else
-          opts[:params] = request.params || {}
-          opts[:bearer] = opts[:params][:api_token] if opts[:params][:api_token]
-
-          mount_on = mount_on+'/' unless mount_on.end_with?('/')
-          path     = request.url.split(mount_on, 2).last.split('?').first.to_s
-          parts    = path.split('/')
-
-          opts[:class] = parts.shift
-          parts
-        end
-
-        opts[:bearer] ||= request.env['HTTP_AUTHORIZATION'].to_s.split('Bearer ')[1]
-
-        api_response = render action, **opts
-
-        if api_response.is_a?(Hash)
-          response.status = api_response[:status] if response
-          api_response.to_h
-        else
-          api_response
-        end
-      end
-    end
-
-    def render action=nil, opts={}
-      if action
-        return error 'Action not defined' unless action[0]
-      else
-        return RenderProxy.new self
-      end
-
-      api_class =
-      if klass = opts.delete(:class)
-        # /api/_/foo
-        if klass == '_'
-          if Joshua::DocSpecial.respond_to?(action.first)
-            return Joshua::DocSpecial.send action.first.to_sym
-          else
-            return error 'Action %s not defined' % action.first
-          end
-        end
-
-        klass = klass.split('/') if klass.is_a?(String)
-        klass[klass.length-1] += '_api'
-
-        begin
-          klass.join('/').classify.constantize
-        rescue NameError => e
-          return error 'API class "%s" not found' % klass
-        end
-      else
-        self
-      end
-
-      api = api_class.new action, **opts
-      api.execute_call
-    end
-
-    private
-
-    def only_in_api_methods!
-      raise ArgumentError, "Available only inside collection or member block for API methods." unless @method_type
-    end
-
-    def set_callback name, block
-      name = [name, @method_type || :all].join('_').to_sym
-      set name, []
-      OPTS[to_s][name].push block
-    end
-  end
-
-  ###
 
   def initialize action, id: nil, bearer: nil, params: {}, opts: {}, request: nil, response: nil, development: false
     @api = INSTANCE.new
@@ -180,10 +45,6 @@ class Joshua
     @api.response      = ::Joshua::Response.new @api
   end
 
-  def message data
-    response.message data
-  end
-
   def execute_call
     if !@api.development && @api.request && @api.request_method == 'GET' && !@api.method_opts[:gettable]
       response.error 'GET request is not allowed'
@@ -195,6 +56,16 @@ class Joshua
 
     @api.raw || response.render
   end
+
+  def to_json
+    execute_call.to_json
+  end
+
+  def to_h
+    execute_call
+  end
+
+  private
 
   def resolve_api_body &block
     begin
@@ -237,16 +108,6 @@ class Joshua
     # we execute generic after block in case of error or no
     execute_callback :after_all
   end
-
-  def to_json
-    execute_call.to_json
-  end
-
-  def to_h
-    execute_call
-  end
-
-  private
 
   def parse_api_params
     return unless @api.method_opts[:params]
@@ -302,4 +163,23 @@ class Joshua
     @api.params
   end
 
+  # inline error raise
+  def error desc
+    if err = RESCUE_FROM[desc]
+      if err.is_a?(Proc)
+        err.call
+      else
+        response.error desc, err
+        desc = err
+      end
+
+      return
+    end
+
+    raise Joshua::Error, desc
+  end
+
+  def message data
+    response.message data
+  end
 end

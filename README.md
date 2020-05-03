@@ -11,7 +11,7 @@ Joshua is opinionated [API](https://learn.g2.com/api) implementation for [Ruby](
 * Automatic documentation builder & Postman import link
 * Nearly nothing to learn, pure Ruby clases
 * Consistent and predictable request and response flow
-* Errors and messages are [localized](./params/type_errors.rb)
+* Errors and messages are [localized](https://github.com/dux/joshua/blob/master/lib/joshua/params/types_errors.rb)
 
 <br />
 
