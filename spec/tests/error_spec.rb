@@ -17,7 +17,7 @@ describe 'dev' do
   end
 
   it 'can generete error in root' do
-    err = GenericApi.error('foo bar').to_h
+    err = GenericApi.response_error('foo bar').to_h
     expect(err[:error][:messages][0]).to eq('foo bar')
   end
 end

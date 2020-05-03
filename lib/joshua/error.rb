@@ -22,10 +22,15 @@ class Joshua
 
     # show and render single error in class error format
     # usually when API class not found
-    def error text
+    def response_error text
       out = Response.new nil
       out.error text
       out.render
+    end
+
+    # class errors, raised by params validation
+    def error desc
+      raise Joshua::Error, desc
     end
 
     def error_print error
@@ -43,6 +48,7 @@ class Joshua
 
   ###
 
+  # inline error raise
   def error desc
     if err = RESCUE_FROM[desc]
       if err.is_a?(Proc)
