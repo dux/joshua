@@ -761,7 +761,7 @@ end
 
 There are a three basic ways you can initialize yor app
 
-### 1.using `config.ru` file - withouth framework
+### 1.using config.ru - withouth framework
 
 This is the fasted way with best memory usage.
 

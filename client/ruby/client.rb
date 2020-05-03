@@ -3,49 +3,44 @@
 # api.call 'company/1/index'
 # api.call [:company, 1, :index]
 # api.call :company, 1, :index
-# api.success?
-# api.response
 
 require 'http'
 
 class JoshuaClient
-  attr_reader :response
-
-  def initialize root, debug: false
-    @debug = debug
-    @root  = root
-    @path  = []
+  def initialize root
+    @root = root
+    reset!
   end
 
   def method_missing name, *args
+    reset! if @done
+
     @path.push name
-    return call if @path[1]
-    @path.push args.first if args.first
-    self
-  end
 
-  def call *args
-    path =
-    if args.first
-      args = args.flatten
-      args[1] ? args.join('/') : args.first
+    if @path[1] && @path[@path.length-1].is_a?(Symbol)
+      # api.users.index {params}
+      # last step, execute
+      @params = args.first || {}
+      call
     else
-      '/' + @path.join('/')
+      # api.users(1) - member id given if present
+      @path.push args.first if args.first
+      self
     end
-
-    path = [@root, path].join('/')
-    puts 'Joshua: %s' % path if @debug
-
-    @path     = []
-    @response = JSON.parse HTTP.get(path).to_s
   end
 
-  def success?
-    @response['success'] == true
+  def call
+    @done = true
+    path  = ([@root] + @path).join '/'
+    
+    JSON.parse HTTP.post(path, form: @params || {}).to_s
   end
 
-  def error?
-    !success?
+  def reset!
+    @done   = false
+    @path   = []
+    @params = nil
+    @id     = nil
   end
 end
 
