@@ -26,8 +26,8 @@ class RequestBase
     response = JSON.parse(data.responseText)
 
     if response.error
-      if request.error_func
-        request.error_func(response.error)
+      if @error_func
+        @error_func(response.error)
       else
         error_info(response)
 

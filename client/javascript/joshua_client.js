@@ -71,8 +71,8 @@ RequestBase = class RequestBase {
     var location, node, response;
     response = JSON.parse(data.responseText);
     if (response.error) {
-      if (request.error_func) {
-        request.error_func(response.error);
+      if (this.error_func) {
+        this.error_func(response.error);
       } else {
         error_info(response);
       }

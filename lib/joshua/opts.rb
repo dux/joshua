@@ -44,6 +44,7 @@ class Joshua
       class_exec &block
       @method_type = nil
     end
+    alias :members :member
 
     # /api/companies/list?countrty_id=1
     def collection &block
@@ -51,6 +52,7 @@ class Joshua
       class_exec &block
       @method_type = nil
     end
+    alias :collections :collection
 
     # There are multiple ways to create params
     # params :name, String, req: true
