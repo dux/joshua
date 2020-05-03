@@ -109,8 +109,12 @@ class Joshua
       end
     end
 
-    def render action, opts={}
-      return error 'Action not defined' unless action[0]
+    def render action=nil, opts={}
+      if action
+        return error 'Action not defined' unless action[0]
+      else
+        return RenderProxy.new self
+      end
 
       api_class =
       if klass = opts.delete(:class)

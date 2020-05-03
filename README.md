@@ -828,6 +828,48 @@ post '/api/users/index' do
 end
 ```
 
-## Testing
+## Testing & non api usage
 
-Load ruby client with `require 'joshua/client'`
+No testing helpers provided (for now)
+
+Use this for easy access (get response `Hash`)
+
+```ruby
+# call user collection method login
+UserApi.render.login(user: 'foo', pass: 'bar')
+
+# call user member method show
+UserApi.render.show(123)
+
+# call user member method foo
+UserApi.render.foo(123, bar: 'baz')
+
+# or wih user token expanded
+UserApi.render :foo, id: 123, bearer: @user.token, params: { bar: 'baz' }
+```
+
+## Demos
+
+* Simple demo, runnable rack app https://github.com/dux/joshua/tree/master/demos/simple
+* Real life AppicationApi, BaseModelApi, UserApiSimple demo https://github.com/dux/joshua/tree/master/demos/inherited-model
+
+## Dependencies
+
+* **rack** - basic request, response lib
+* **json** - better JSON export
+* **http** - for JoshuaClient
+* **dry-inflector** - `classify`, `constantize`, ...
+* **html-tag** - for documention builder
+* **clean-hash** - for params in api methods
+
+## Development
+
+After checking out the repo, run bundle install to install dependencies. Then, run rspec to run the tests.
+
+## Contributing
+
+Bug reports and pull requests are welcome on GitHub at https://github.com/dux/joshua. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the Contributor Covenant code of conduct.
+
+## License
+
+The gem is available as open source under the terms of the MIT License.

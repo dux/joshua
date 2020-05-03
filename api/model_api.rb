@@ -1,6 +1,6 @@
 class Company
   def name
-    'JRNI'
+    'ACME corp'
   end
 end
 

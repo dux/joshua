@@ -25,7 +25,7 @@ describe 'dev' do
 
   it 'executes before in order' do
     response = CompanyApi.render :index, id: 1, params: { name: 'Dux' }
-    expect(response).to eq({success: true, message: 'all ok', meta: { ip: '1.2.3.4' }, data: 'JRNI', status: 200 })
+    expect(response).to eq({success: true, message: 'all ok', meta: { ip: '1.2.3.4' }, data: 'ACME corp', status: 200 })
   end
 
   it 'expects clasic module to be incuded' do

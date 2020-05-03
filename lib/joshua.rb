@@ -31,6 +31,7 @@ require_relative './joshua/opts'
 require_relative './joshua/base'
 require_relative './joshua/error'
 require_relative './joshua/response'
+require_relative './joshua/render_proxy'
 
 require_relative './doc/doc'
 require_relative './doc/special'

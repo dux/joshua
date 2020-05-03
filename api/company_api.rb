@@ -27,6 +27,7 @@ class CompanyApi < ModelApi
     end
 
     def show
+      @model.name
     end
   end
 
