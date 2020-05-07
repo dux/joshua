@@ -9,7 +9,7 @@ class ApplicationApi < Joshua
   rescue_from :all do |error|
     ap [error.message, error.backtrace.reject{ |_| _.include?('/.rvm/') }] unless ENV['RACK_ENV'] == 'test'
 
-    response.error 500, 'Error happens'
+    response.error 'Error happens', status: 500
   end
 
   rescue_from :named_error, 'Named error example'

@@ -6,8 +6,10 @@ class UsersApi < ModelApi
 
   collection do
     desc 'Signup via email to app'
-    params.email :email
-    recaptcha!
+    hcaptcha!
+    params do
+      email :email
+    end
     def signup
       Mailer.email_login(params.email).deliver
       'Email with login link sent'
@@ -28,7 +30,6 @@ class UsersApi < ModelApi
       message 'You deleted yourself'
     end
 
-    params.name min: 6
     def undelete
       @user.update is_deleted: false, name: params.name
       messsage 'You undeleted yourself'

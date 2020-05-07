@@ -157,8 +157,6 @@ class Joshua
     end
 
     def error_print error
-      return if ENV['RACK_ENV'] == 'test'
-
       puts
       puts 'Joshua error dump'.red
       puts '---'
@@ -274,6 +272,14 @@ class Joshua
         @@params.add_generic :detail, data
       else
         set :opts, :detail, data
+      end
+    end
+
+    def allow type
+      if @method_type
+        @@params.add_generic :allow, type
+      else
+        raise ArgumentError.new('allow can only be set on methods')
       end
     end
 

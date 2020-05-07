@@ -90,18 +90,15 @@ class Joshua
       # controlled error raised via error "message", ignore
       response.error error.message
     rescue => error
-      Joshua.error_print error
+      # uncontrolled error, should be logged
+      Joshua.error_print error if @api.development
 
       block = RESCUE_FROM[error.class] || RESCUE_FROM[:all]
 
       if block
         instance_exec error, &block
       else
-        # uncontrolled error, should be logged
-        # search to response[:code] 500 in after block
-        response.error error.message
-        response.error :class, error.class.to_s
-        response.error :code, 500
+        response.error error.message, status: 500
       end
     end
 
@@ -164,19 +161,19 @@ class Joshua
   end
 
   # inline error raise
-  def error desc
-    if err = RESCUE_FROM[desc]
+  def error text, args={}
+    if err = RESCUE_FROM[text]
       if err.is_a?(Proc)
         err.call
+        return
       else
-        response.error desc, err
-        desc = err
+        response.error err, args
       end
-
-      return
+    else
+      response.error text, args
     end
 
-    raise Joshua::Error, desc
+    raise Joshua::Error, text
   end
 
   def message data

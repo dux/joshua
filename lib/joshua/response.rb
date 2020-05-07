@@ -2,6 +2,8 @@
 
 class Joshua
   class Response
+    attr_reader :errors
+
     def initialize api
       @api         = api
       @out         = {}
@@ -37,14 +39,17 @@ class Joshua
     end
 
     # add api response error
-    def error *args
-      return @errors unless args[0]
+    def error text, args={}
+      code   = args.delete(:code)
+      status = args.delete(:status)
 
-      desc, code = args.reverse
+      raise 'Key %s is not supported' % args.keys.first if args.keys.first
 
-      @errors[:code]       = code if code
+      @status ||= status if status
+
+      @errors[:code]     ||= code if code
       @errors[:messages] ||= []
-      @errors[:messages].push desc unless @errors[:messages].include?(desc)
+      @errors[:messages].push text unless @errors[:messages].include?(text)
     end
 
     def error?
@@ -79,7 +84,7 @@ class Joshua
         out[:meta]    = @meta
         out[:message] = @message if @message
         out[:data]    = @data unless @data.nil?
-        out[:status]  = error? ? 400 : 200
+        out[:status]  = @status || (error? ? 400 : 200)
       end
     end
   end

@@ -25,8 +25,9 @@ Joshua is opinionated [API](https://learn.g2.com/api) implementation for [Ruby](
 * Base
   * [rescue from](#rescue_from)
   * [before and after](#before)
+  * [extending and including](#extending)
   * [models](#models)
-  * [extending](#extending)
+  * [exporters](#models)
 * Method
   * [collections or members](#before)
   * [helper methods](#helper_methods)
@@ -39,6 +40,13 @@ Joshua is opinionated [API](https://learn.g2.com/api) implementation for [Ruby](
     * meta info
     * [message](#message)
 * [Doc builder](#doc_builder)
+
+
+### Speed
+
+Joshua **directly** maps requests to method calls, without routing and it also can work mounted directly on the rack interface, as demonstrated [here](https://github.com/dux/joshua/blob/master/demos/simple/config.ru). 
+
+Knowing this, there can not be "faster" api framework, there can only be some other one equally fast or slower :)
 
 
 ### Look and feel
@@ -292,7 +300,9 @@ UserApi.render :login, params: { user: 'aaa', pass: 'bbb' }
 <a name="rest"></a>
 ### Can work in REST or JSON RPC mode
 
-By default API works on POST for all methods, but you can modify the behaviour by enabling specific methods 
+By default API works on POST for all methods and raises error for any other reqest type. You can modify the behaviour by enabling specific methods using for example `allow :get` to allow `HTTP GET`, shortcut `gettable` or `force :get` to only allow `HTTP GET`.
+
+#### Example requests
 
 ```bash
 # this POST request will in production by default 
@@ -730,9 +740,9 @@ Response object is responsible for response render
     response.header['content-type'] = 'application/foo'
 
     # force response.status 404
-    response.error 404, 'Object not found'
+    error 404, 'Object not found'
     # defaults to status: 400
-    response.error 'Object not found' 
+    error 'Object not found' 
 
     # check if response has errors
     response.error?
@@ -776,6 +786,36 @@ end
 
 Helper methods are all instance methods defined outside `member` or `collection` scopes
 
+<a name="errors"></a>
+### response errors
+
+You are free to use all HTTP error status codes, but we suggest to use only `400` for handled errors and `500` for unhandled errors, and of course, try to provide nice error descriptions.
+
+#### Example
+
+```ruby
+rescue_from :big_load do
+  custom_looger :load_too_big
+  error 'There is to big load on the API, please try again or sign up for priority access'
+end
+
+def foo
+  # response.status: 400
+  error 'Object not found'
+
+  # response.status 400, error.code: 404
+  error 'Object not found', code: 404
+
+  # response.status 404, error.code: 404
+  error 'Object not found', status: 404, code: 404
+
+  # unhandled, response.status: 500
+  raise 'Some erorr'
+
+  # execute rescued :big_load
+  error :big_load
+end
+```
 
 ### @api - instance variable
 
