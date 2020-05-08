@@ -37,4 +37,9 @@ class ApplicationApi < Joshua
     response.meta :speed_ms, ((Time.now - @_time)*1000).round(3) unless ENV['RACK_ENV'] == 'test'
   end
 
+  after_auto_mount do |nav, opts|
+    if nav[2] && nav.first == 'some_company'
+      opts[:params][:company] = nav.shift
+    end
+  end
 end

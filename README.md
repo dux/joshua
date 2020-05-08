@@ -681,7 +681,24 @@ class TestApi < Joshua
 end
 ```
 
-#### Unsafe
+### after_auto_mount
+
+If you want to modify api request after mount. first parameter is class+method path and second is all options hash.
+
+```ruby
+# /api/cisco/contracts/list
+# covert to
+# /api/contracts/list?org_id=123
+
+after_auto_mount do |nav, opts|
+  if org = Org.find_by code: nav.first
+    nav.shift
+    opts[:params][:org_id] = @org.id
+  end
+end
+```
+
+### unsafe
 
 Methods marked as unsafe will set option `@api.opts.unsafe == true` 
 

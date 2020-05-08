@@ -76,6 +76,8 @@ class Joshua
           path     = request.url.split(mount_on, 2).last.split('?').first.to_s
           parts    = path.split('/')
 
+          @@after_auto_mount.call parts, opts if @@after_auto_mount
+
           opts[:class] = parts.shift
           parts
         end
@@ -141,6 +143,10 @@ class Joshua
     # error :not_found
     def rescue_from klass, desc=nil, &block
       RESCUE_FROM[klass] = desc || block
+    end
+
+    def after_auto_mount &blok
+      @@after_auto_mount = blok
     end
 
     # show and render single error in class error format

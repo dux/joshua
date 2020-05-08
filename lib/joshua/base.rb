@@ -33,15 +33,15 @@ class Joshua
       @api.action = action
     end
 
-    @api.bearer   = bearer
+    @api.bearer        = bearer
     @api.id          ||= id
     @api.action        = @api.action.to_sym
     @api.request       = request
     @api.method_opts   = self.class.opts.dig(@api.id ? :member : :collection, @api.action) || {}
     @api.development   = !!development
     @api.rack_response = response
-    @api.params        = ::CleanHash::Indifferent.new params
-    @api.opts          = ::CleanHash::Indifferent.new opts
+    @api.params        = ::CleanHash::Strict.new params
+    @api.opts          = ::CleanHash::Strict.new opts
     @api.response      = ::Joshua::Response.new @api
   end
 
@@ -51,7 +51,7 @@ class Joshua
     else
       parse_api_params
       parse_annotations unless response.error?
-      resolve_api_body unless response.error?
+      resolve_api_body  unless response.error?
     end
 
     @api.raw || response.render
@@ -66,6 +66,28 @@ class Joshua
   end
 
   private
+
+  def parse_api_params
+    return unless @api.method_opts[:params]
+
+    parse = Joshua::Params::Parse.new
+
+    for name, opts in @api.method_opts[:params]
+      # enforce required
+      if opts[:required] && @api.params[name].to_s == ''
+        response.error_detail name, 'Argument missing'
+        next
+      end
+
+      begin
+        # check and coerce value
+        @api.params[name] = parse.check opts[:type], @api.params[name], opts
+      rescue Joshua::Error => error
+        # add to details if error found
+        response.error_detail name, error.message
+      end
+    end
+  end
 
   def resolve_api_body &block
     begin
@@ -104,28 +126,6 @@ class Joshua
 
     # we execute generic after block in case of error or no
     execute_callback :after_all
-  end
-
-  def parse_api_params
-    return unless @api.method_opts[:params]
-
-    parse = Joshua::Params::Parse.new
-
-    for name, opts in @api.method_opts[:params]
-      # enforce required
-      if opts[:required] && @api.params[name].to_s == ''
-        response.error_detail name, 'Argument missing'
-        next
-      end
-
-      begin
-        # check and coerce value
-        @api.params[name] = parse.check opts[:type], @api.params[name], opts
-      rescue Joshua::Error => error
-        # add to details if error found
-        response.error_detail name, error.message
-      end
-    end
   end
 
   def parse_annotations
