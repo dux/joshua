@@ -32,10 +32,11 @@ class Joshua
               items.push postman_add_method(type, table, key, value)
             end
 
-            hash[:item].push({
-              name: type,
-              item: items
-            })
+            hash[:item].push *items
+            # hash[:item].push({
+            #   name: type,
+            #   item: items
+            # })
           end
         end
 
@@ -49,7 +50,7 @@ class Joshua
       unwanted = %w(all member collection)
       {}.tap do |doc|
         for el in Joshua.documented
-          doc[el.to_s.sub(/Api$/, '').tableize] = el.opts.filter { |k, _| !unwanted.include?(k.to_s.split('_')[1]) }
+          doc[el.to_s.sub(/Api$/, '').underscore] = el.opts.filter { |k, _| !unwanted.include?(k.to_s.split('_')[1]) }
         end
       end
     end
@@ -66,12 +67,12 @@ class Joshua
       base = base.join('/')
 
       path.push table
-      path.push '{id}' if type == :member
+      path.push ':id' if type == :member
       path.push name
 
-      ap base
+      name = '%s*' % name if type == :collection
 
-      {
+      out = {
         name: name,
         request: {
           method: 'POST',
@@ -85,6 +86,15 @@ class Joshua
           }
         },
       }
+
+      for key, value in (item[:params] || {})
+        out[:request][:body] ||= {}
+        out[:request][:body][:mode] = 'formdata'
+        out[:request][:body][:formdata] ||= []
+        out[:request][:body][:formdata].push({ key: key, description: value[:type] })
+      end
+
+      out
     end
   end
 end
