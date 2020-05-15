@@ -1,11 +1,48 @@
 # reponse from /api/_/foo
 
 class Joshua
-  module DocSpecial
-    extend self
+  class DocSpecial
+    def initialize api
+      @api = api
+    end
 
     def postman
-      raw
+      out = {
+        info: {
+          _postman_id: @api[:request].url,
+          name: @api[:request].host,
+          schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+        },
+        item: []
+      }
+
+      for table, data in raw
+        raw_data = raw[table.to_s]
+        hash = {}
+        hash[:name] = table
+        hash[:item] = []
+
+        for type in [:collection, :member]
+          next unless raw_data[type]
+
+          if raw_data[type]
+            items = []
+
+            for key, value in raw_data[type]
+              items.push postman_add_method(type, table, key, value)
+            end
+
+            hash[:item].push({
+              name: type,
+              item: items
+            })
+          end
+        end
+
+        out[:item].push hash
+      end
+
+      out.to_json
     end
 
     def raw
@@ -15,6 +52,39 @@ class Joshua
           doc[el.to_s.sub(/Api$/, '').tableize] = el.opts.filter { |k, _| !unwanted.include?(k.to_s.split('_')[1]) }
         end
       end
+    end
+
+    private
+
+    def postman_add_method type, table, name, item
+      path = []
+
+      base = @api[:request].url.split('/_/').first
+      base = base.split('/')
+
+      path.push base.pop
+      base = base.join('/')
+
+      path.push table
+      path.push '{id}' if type == :member
+      path.push name
+
+      ap base
+
+      {
+        name: name,
+        request: {
+          method: 'POST',
+          header: [],
+          url: {
+            raw:      ([base] + path).join('/'),
+            protocol: base.split(':').first,
+            host:     @api[:request].host.split('.'),
+            port:     @api[:request].port,
+            path:     path
+          }
+        },
+      }
     end
   end
 end

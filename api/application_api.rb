@@ -1,6 +1,5 @@
 class ApplicationApi < Joshua
-
-  base '/api'
+  mount_on '/api'
 
   ###
 

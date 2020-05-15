@@ -1,4 +1,6 @@
 class Joshua
+  @@after_auto_mount = nil
+
   class << self
     # perform auto_mount from a rake call
     def call env
@@ -11,11 +13,11 @@ class Joshua
           [Doc.misc_file('favicon.png')]
         ]
       else
-        data = auto_mount request: request, mount_on: '/', development: ENV['RACK_ENV'] == 'development'
+        data = auto_mount request: request, development: ENV['RACK_ENV'] == 'development'
 
         if data.is_a?(Hash)
           [
-            200,
+            data[:status] || 200,
             { 'Content-Type' => 'application/json', 'Cache-Control'=>'private; max-age=0' },
             [data.to_json]
           ]
@@ -35,7 +37,8 @@ class Joshua
     # * display doc in a root
     # * call methods if possible /api/v1.comapny/1/show
     def auto_mount request:, response: nil, mount_on: nil, bearer: nil, development: false
-      mount_on = [request.base_url, mount_on].join('') unless mount_on.to_s.include?('//')
+      mount_on ||= OPTS[:api][:mount_on] || '/'
+      mount_on   = [request.base_url, mount_on].join('') unless mount_on.to_s.include?('//')
 
       if request.url == mount_on && request.request_method == 'GET'
         response.header['Content-Type'] = 'text/html' if response
@@ -107,8 +110,10 @@ class Joshua
       if klass = opts.delete(:class)
         # /api/_/foo
         if klass == '_'
-          if Joshua::DocSpecial.respond_to?(action.first)
-            return Joshua::DocSpecial.send action.first.to_sym
+          klass = Joshua::DocSpecial.new(opts)
+
+          if klass.respond_to?(action.first)
+            return klass.send action.first.to_sym
           else
             return error 'Action %s not defined' % action.first
           end
@@ -174,10 +179,10 @@ class Joshua
 
     @@params = Params::Define.new
 
-    # sets api base / root
-    # base '/api'
-    def base what
-      set :opts, :base, what
+    # sets api mount point
+    # mount_on '/api'
+    def mount_on what
+      OPTS[:api][:mount_on] = what
     end
 
     # if you want to make API DOC public use "documented"

@@ -4,7 +4,7 @@ class Joshua
 
   ANNOTATIONS   ||= {}
   RESCUE_FROM   ||= {}
-  OPTS          ||= {}
+  OPTS          ||= { api: {} }
   PLUGINS       ||= {}
   DOCUMENTED    ||= []
   INSTANCE      ||= Struct.new 'JoshuaOpts',
@@ -40,8 +40,8 @@ class Joshua
     @api.method_opts   = self.class.opts.dig(@api.id ? :member : :collection, @api.action) || {}
     @api.development   = !!development
     @api.rack_response = response
-    @api.params        = ::CleanHash::Strict.new params
-    @api.opts          = ::CleanHash::Strict.new opts
+    @api.params        = ::CleanHash.new params
+    @api.opts          = ::CleanHash.new opts
     @api.response      = ::Joshua::Response.new @api
   end
 
