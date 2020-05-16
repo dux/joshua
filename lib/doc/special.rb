@@ -87,10 +87,10 @@ class Joshua
         },
       }
 
+      item[:params] ||= { 'user[name]' => {} }
+
       for key, value in (item[:params] || {})
-        out[:request][:body] ||= {}
-        out[:request][:body][:mode] = 'formdata'
-        out[:request][:body][:formdata] ||= []
+        out[:request][:body] ||= { mode: 'formdata', formdata: [] }
         out[:request][:body][:formdata].push({ key: key, description: value[:type] })
       end
 

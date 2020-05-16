@@ -29,6 +29,13 @@ class CompanyApi < ModelApi
     def show
       @model.name
     end
+
+    params do
+      company model: :company
+    end
+    def update
+      params.company
+    end
   end
 
   def index

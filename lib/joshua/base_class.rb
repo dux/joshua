@@ -363,6 +363,14 @@ class Joshua
       out
     end
 
+    def model name, &block
+      name = name.to_s.underscore
+
+      model = Model.new
+      model.instance_eval &block
+      MODELS[name] = model
+    end
+
     # here we capture member & collection metods
     def method_added name
       return if name.to_s.start_with?('_api_')
@@ -387,7 +395,7 @@ class Joshua
     end
 
     # generic opts set
-    # set :foo, :bar, :baz
+    # set :user_name, :email, :baz
     def set *args
       name, value   = args.pop(2)
       args.unshift to_s

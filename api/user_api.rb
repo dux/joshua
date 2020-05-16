@@ -19,5 +19,13 @@ class UserApi < ModelApi
         error 'Wrong user & pass'
       end
     end
+
+    members do
+      params :user, model: :user
+      def update
+        ap params.user
+      end
+    end
   end
+ 
 end

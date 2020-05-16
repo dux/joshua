@@ -6,6 +6,9 @@ require_relative '../api/model_api'
 require_relative '../api/company_api'
 require_relative '../api/user_api'
 
+require_relative '../api/models/company.rb'
+require_relative '../api/models/user.rb'
+
 class Object
   def pp data
     puts

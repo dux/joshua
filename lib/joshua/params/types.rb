@@ -118,6 +118,21 @@ class Joshua
         end
       end
 
+      def check_model model, opts
+        model_name   = opts[:model].to_s.underscore
+        model_schema = MODELS[model_name]
+        
+        error "Joshua model for [#{model_name}] not found" unless model_schema
+
+        parse = Joshua::Params::Parse.new
+        
+        CleanHash.new({}).tap do |out|
+          for key, type in model_schema
+            out[key] = parse.check type, model[key]
+          end
+        end
+      end
+
       private
 
       def check_date_min_max value, opts={}

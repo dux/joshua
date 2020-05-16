@@ -6,6 +6,7 @@ class Joshua
   RESCUE_FROM   ||= {}
   OPTS          ||= { api: {} }
   PLUGINS       ||= {}
+  MODELS        ||= {}
   DOCUMENTED    ||= []
   INSTANCE      ||= Struct.new 'JoshuaOpts',
     :action,

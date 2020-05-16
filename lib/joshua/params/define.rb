@@ -21,6 +21,7 @@ class Joshua
 
         opts ||= {}
         opts[:type] = type.to_s.dasherize.downcase.to_sym
+        opts[:type] = :model if opts[:model]
 
         opts[:required] = true if opts[:required].nil?
         opts[:required] = false if name.sub! /\?$/, ''

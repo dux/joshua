@@ -68,7 +68,7 @@ class Joshua
                   n.p '<b>TOOLS</b>'
                   n.div do |n|
                     n.push %[<p><a class="badge badge-light" href="#api_errors">Named errors</a></p>]
-                    n.push %[<p><a class="badge badge-light" href="#{mount_on}_/postman" target="capi_postman">Postman import URL</a></p>]
+                    n.push %[<p><a class="badge badge-light" href="#{mount_on}_/postman" target="capi_postman">Postman/Insomnija import URL</a></p>]
                     n.push %[<p><a class="badge badge-light" href="#{mount_on}_/raw" target="capi_raw">Raw doc data</a></p>]
                   end
 
