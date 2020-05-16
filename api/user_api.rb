@@ -23,7 +23,7 @@ class UserApi < ModelApi
     members do
       params :user, model: :user
       def update
-        ap params.user
+        params.user.to_h
       end
     end
   end

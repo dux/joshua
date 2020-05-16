@@ -121,15 +121,19 @@ class Joshua
       def check_model model, opts
         model_name   = opts[:model].to_s.underscore
         model_schema = MODELS[model_name]
-        
+
         error "Joshua model for [#{model_name}] not found" unless model_schema
+
+        types, func = *model_schema
 
         parse = Joshua::Params::Parse.new
         
         CleanHash.new({}).tap do |out|
-          for key, type in model_schema
+          for key, type in types
             out[key] = parse.check type, model[key]
           end
+
+          instance_exec(out, &func) if func
         end
       end
 

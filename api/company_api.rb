@@ -34,7 +34,7 @@ class CompanyApi < ModelApi
       company model: :company
     end
     def update
-      params.company
+      params.company.to_h
     end
   end
 

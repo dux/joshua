@@ -1,4 +1,9 @@
-Joshua.model :company do |m|
-  m.set :name, String
-  m.set :address, String
+class ApplicationApi
+
+  model :company do |m|
+    m.set :name, String
+    m.set :address, String
+  end
+
 end
+  

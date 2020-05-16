@@ -367,8 +367,9 @@ class Joshua
       name = name.to_s.underscore
 
       model = Model.new
-      model.instance_eval &block
-      MODELS[name] = model
+      func  = model.instance_eval &block
+      MODELS[name] = [model]
+      MODELS[name].push func if func.is_a?(Proc)
     end
 
     # here we capture member & collection metods

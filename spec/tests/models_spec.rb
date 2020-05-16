@@ -28,4 +28,11 @@ describe Joshua::Model do
       expect(response[:success]).to eq(true)
     end
   end
+
+  context 'param filtering' do
+    it 'does not allow params' do
+      response = UserApi.render.update(1, user: { name: 'john', email: 'better@email.com', is_admin: true })
+      expect(response[:success]).to eq(false)
+    end
+  end
 end

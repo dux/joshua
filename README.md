@@ -27,7 +27,6 @@ Joshua is opinionated [API](https://learn.g2.com/api) implementation for [Ruby](
   * [before and after](#before)
   * [extending and including](#extending)
   * [models](#models)
-  * [exporters](#models)
 * Method
   * [collections or members](#before)
   * [helper methods](#helper_methods)
@@ -703,6 +702,50 @@ end
 Methods marked as unsafe will set option `@api.opts.unsafe == true`
 
 You can use that information not to check for bearer auth token.
+
+<a name="models"></a>
+### Models
+
+API models can be defined and paramterers can be checked against the models
+
+```ruby
+class ApplicaitonApi
+  model :company do
+    id      Integer
+    name    String
+    address :address
+  end
+
+  model User do
+    id       Integer
+    name     String
+    email    :email
+    is_admin :boolean
+
+    # If proc is defined and returned, filtering will be applied
+    #   before the data is forwarded to api method
+    # In this case raise error is :is_admin attribute is defined but user
+    #   is not allowed to change it
+    proc do |data|
+      if !data[:is_admin].nil? && !user.can.admin?
+        error 'You are not allowed change the value of :is_admin attribute' 
+      end
+    end
+  end
+end
+
+class UserApi
+  members do
+    desc 'Update user options'
+    params do
+      user model: User
+    end
+    def update
+      # ...
+    end
+  end
+end
+```
 
 ## API methods - inline methods
 
