@@ -1,9 +1,3 @@
-class Company
-  def name
-    'ACME corp'
-  end
-end
-
 class ModelApi < ApplicationApi
   member do
     before do

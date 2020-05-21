@@ -17,9 +17,21 @@ class Joshua
           type = :string
         end
 
+        opts ||= {}
+
+        if type.is_a?(Array)
+          type = type[0]
+          opts[:array] = true
+        end
+
+        if type.is_a?(Set)
+          type = type.to_a[0]
+          opts[:array] = true
+          opts[:no_duplicates] = true
+        end
+
         type = :string if type.nil?
 
-        opts ||= {}
         opts[:type] = type.to_s.dasherize.downcase.to_sym
         opts[:type] = :model if opts[:model]
 

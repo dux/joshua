@@ -32,6 +32,7 @@ require_relative './joshua/base_class'
 require_relative './joshua/response'
 require_relative './joshua/render_proxy'
 require_relative './joshua/model'
+require_relative './joshua/exporter'
 
 require_relative './doc/doc'
 require_relative './doc/special'

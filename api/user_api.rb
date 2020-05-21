@@ -25,6 +25,10 @@ class UserApi < ModelApi
       def update
         params.user.to_h
       end
+
+      def exported
+        
+      end
     end
   end
  

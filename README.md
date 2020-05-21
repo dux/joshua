@@ -542,7 +542,7 @@ end
 
 ```
 
-<a name="#params"></a>
+<a name="params"></a>
 ### Params
 
 * you can define params directly on the params metod or you can pass as a block
@@ -559,9 +559,9 @@ end
 
   # as a block
   params do
-    user_email? :email                 # type: :email, required: false
-    user_email :email, req: true       # type: :email, required: true
-    user_email :email, required: true  # type: :email, required: true
+    user_email? :email                  # type: :email, required: false
+    user_email  :email, req: true       # type: :email, required: true
+    user_email  :email, required: true  # type: :email, required: true
   end
   ```
 
@@ -581,6 +581,19 @@ end
     is_active :boolean # { type: :boolean, default: false }
     is_active false    # { type: :boolean, default: false }
     is_active true     # { type: :boolean, default: true }
+  end
+  ```
+
+* array types are supported
+
+  ```ruby
+  params do
+    labels Array[:label] # Collection
+    labels Set[:label]   # In Set duplicates are discarded
+
+    # if data is provided in a string and not in a Array value
+    # you can define a delimiter that will split String to Array
+    labels Array[:label], delimiter: /\s*,\s*/
   end
   ```
 
@@ -928,6 +941,11 @@ end
 
 # /api/user/foo # { message: 'bar' }
 ```
+
+### Exporter
+
+Inside exporter user will be available if one defined by `User.current`, `Current.user` or `Thread.current[:current_user]`.
+
 
 ### As a plugin
 

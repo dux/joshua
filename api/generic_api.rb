@@ -53,5 +53,13 @@ class GenericApi < ApplicationApi
 
       response { out.join($/) }
     end
+
+    params do
+      labels_dup   Array[:label]
+      labels_nodup Set[:label]
+    end
+    def list_labels
+      params.to_h
+    end
   end
 end

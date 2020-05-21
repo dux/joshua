@@ -371,6 +371,14 @@ class Joshua
       MODELS[name] = [model]
       MODELS[name].push func if func.is_a?(Proc)
     end
+    
+    def export name, opts={}, &block
+      if block_given?
+        Exporter.define name, opts, &block
+      else
+        Exporter.export name, opts
+      end
+    end
 
     # here we capture member & collection metods
     def method_added name

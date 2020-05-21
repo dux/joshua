@@ -22,16 +22,20 @@ class Joshua
             error 'Argument missing'
           end
         else
-          m = 'check_%s' % type
-          hard_error 'Unsupported paramter type: %s' % type unless respond_to?(m)
+          type_check = 'check_%s' % type
+          hard_error 'Unsupported paramter type: %s' % type unless respond_to?(type_check)
 
           if opts[:array]
-            delimiter = opts[:array].is_a?(TrueClass) ? /\s*[,:;]\s*/ : opts[:array]
+            unless value.is_a?(Array)
+              delimiter   = opts[:delimiter] || /\s*[,:;]\s*/
+              value = value.split(delimiter)
+            end
 
-            value = value.split(delimiter) unless value.is_a?(Array)
-            value.map { |_| check_send m, _, opts }
+            value = value.map { |_| check_send type_check, _, opts }
+            value = Set.new(value).to_a if opts[:no_duplicates]
+            value
           else
-            check_send m, value, opts
+            check_send type_check, value, opts
           end
         end
       end

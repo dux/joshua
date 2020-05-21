@@ -180,4 +180,22 @@ class Joshua
   def message data
     response.message data
   end
+
+  def export data, type=nil
+    if data.nil?
+      nil
+    elsif data.respond_to?(:each)
+      data
+        .map { |el| export_call el, type }
+        .reject { |el| el.empty? }
+    else
+      export_call data, type
+    end
+  end
+
+  def export_call data, type
+    type ||= data.class
+
+    # hsh.delete_if { |_, v| v.empty? }
+  end
 end

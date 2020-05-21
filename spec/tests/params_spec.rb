@@ -115,14 +115,13 @@ describe 'tesing params' do
     end
   end
 
-  context 'custom types' do
-    it 'can create custom param' do
-
-    end
-
-    it 'can validate custom value' do
-
+  context 'custom types & array types' do
+    it 'cecks if array and set params are working' do
+      list = ['foo', 'bar', 'bar', 'b a z']
+      response = CleanHash.new GenericApi.render.list_labels(labels_dup: list, labels_nodup: list)
+      expect(response.data.labels_dup).to eq(["foo", "bar", "bar", "b_a_z"])
+      expect(response.data.labels_nodup).to eq(["foo", "bar", "b_a_z"])
     end
   end
-
 end
+
