@@ -44,7 +44,7 @@ class Joshua
 
       def check_send m, value, opts
         send(m, value, opts).tap do |_|
-          error 'Value not in range of values' if opts[:values] && !opts[:values].include?(_)
+          error localized(:not_in_range) if opts[:values] && !opts[:values].include?(_)
         end
       end
 

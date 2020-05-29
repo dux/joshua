@@ -18,10 +18,10 @@ class Joshua
 
       def export object, opts={}
         return if depth > @@export_depth
-        klass = opts.delete(:class) || object.class
+        klass = opts.delete(:exporter) || object.class
         klass = klass.to_s.underscore
         func  = EXPORTERS[klass] || raise('Exporter %s not defined, you have: %s' % [klass, EXPORTERS.keys.join(', ')])
-        
+
         depth 1
         out = {}
         begin
@@ -43,9 +43,9 @@ class Joshua
     end
 
     ###
-    
+
     def initialize
-      
+
     end
 
     # get current user from globals if globals defined

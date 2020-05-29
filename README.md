@@ -8,7 +8,7 @@ Joshua is opinionated [API](https://learn.g2.com/api) implementation for [Ruby](
 
 * Can work in REST or JSON RPC mode.
 * Automatic routing + can be mounted as a Rack app, without framework, for unmatched speed and low memory usage
-* Automatic documentation builder & Postman import link
+* Automatic documentation builder & [Postman](https://www.postman.com/) / [Insomnia](https://insomnia.rest/) import link
 * Nearly nothing to learn, pure Ruby clases
 * Consistent and predictable request and response flow
 * Errors and messages are [localized](https://github.com/dux/joshua/blob/master/lib/joshua/params/types_errors.rb)
@@ -17,27 +17,28 @@ Joshua is opinionated [API](https://learn.g2.com/api) implementation for [Ruby](
 
 ### Components
 
-* Request
+* Request Flow
   * [REST / JSON RPC](#rest)
   * [auto mount](#auto_mount)
   * [manual mount](#manual_mount)
   * [automatic routing](#routing)
-* Base
-  * [rescue from](#rescue_from)
-  * [before and after](#before)
-  * [extending and including](#extending)
-  * [models](#models)
-* Method
+* API Methods
   * [collections or members](#before)
   * [helper methods](#helper_methods)
   * [description and detail](#desc_and_detail)
   * [annotations + custom annotations](#annotations)
   * [params + custom params](#params)
+    * [models](#models)
 * [Response](#response)
+  * [model exporters](#exporters)
   * [errors + custom errors](#errors)
   * success
     * meta info
     * [message](#message)
+* Class methods
+  * [rescue from](#rescue_from)
+  * [before and after](#before)
+  * [extending and including](#extending)
 * [Doc builder](#doc_builder)
 
 
@@ -942,9 +943,40 @@ end
 # /api/user/foo # { message: 'bar' }
 ```
 
+<a name="exporters"></a>
 ### Exporter
 
-Inside exporter user will be available if one defined by `User.current`, `Current.user` or `Thread.current[:current_user]`.
+Inside exporter user will be available if one following is defined: `User.current`, `Current.user` or `Thread.current[:current_user]`.
+
+```ruby
+class ApplicationApi
+  export Company do |model, out|
+    out[:name]     = model.name
+    out[:address]  = model.address
+    out[:creator]  = export User.find(model.created_by)
+    out[:revenue]  = model.last_revenue if user.can.admin?
+  end
+
+  export User, include_missing: true do |model, out|
+    out[:name]     = model.name
+    out[:email]    = model.email
+    out[:company]  = export Company.find(model.company_id)
+    out[:is_admin] = model.is_admin ? 'YES' || 'no'
+  end
+end
+
+# And to export from anywhere
+
+Joshua.export @user
+Joshua.export @company
+Joshua.export @company, exporter: 'company/custom'
+
+# or just export in api methods
+def update
+  # ...
+  export @user
+end
+```
 
 
 ### As a plugin
