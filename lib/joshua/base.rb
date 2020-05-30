@@ -41,8 +41,8 @@ class Joshua
     @api.method_opts   = self.class.opts.dig(@api.id ? :member : :collection, @api.action) || {}
     @api.development   = !!development
     @api.rack_response = response
-    @api.params        = ::CleanHash.new params
-    @api.opts          = ::CleanHash.new opts
+    @api.params        = HashWia.new params
+    @api.opts          = HashWia.new opts
     @api.response      = ::Joshua::Response.new @api
   end
 

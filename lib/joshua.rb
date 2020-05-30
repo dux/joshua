@@ -21,7 +21,7 @@ end
 
 require 'json'
 require 'html-tag'
-require 'clean-hash'
+require 'hash_wia'
 
 require_relative './joshua/params/define'
 require_relative './joshua/params/parse'

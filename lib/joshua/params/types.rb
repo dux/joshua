@@ -127,8 +127,8 @@ class Joshua
         types, func = *model_schema
 
         parse = Joshua::Params::Parse.new
-        
-        CleanHash.new({}).tap do |out|
+
+        {}.to_hwia.tap do |out|
           for key, type in types
             out[key] = parse.check type, model[key]
           end
