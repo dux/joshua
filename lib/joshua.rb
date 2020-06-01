@@ -23,6 +23,8 @@ require 'json'
 require 'html-tag'
 require 'hash_wia'
 
+require_relative '../../typero/lib/typero'
+
 require_relative './joshua/params/define'
 require_relative './joshua/params/parse'
 require_relative './joshua/params/types'

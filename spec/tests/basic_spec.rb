@@ -42,4 +42,9 @@ describe 'dev' do
     response = GenericApi.render :send_csv
     expect(response.split($/).first).to eq('name;email')
   end
+
+  it 'logs in success' do
+    response = UserApi.render.login user: 'foo', pass: 'bar'
+    expect(response[:success]).to eq(true)
+  end
 end

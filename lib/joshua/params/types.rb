@@ -4,119 +4,119 @@ class Joshua
   module Params
     class Parse
       # params.is_active :boolean, default: false
-      def check_boolean value, opts={}
-        return false unless value
+      # def check_boolean value, opts={}
+      #   return false unless value
 
-        if %w(true 1 on).include?(value.to_s)
-          true
-        elsif %w(false 0 off).include?(value.to_s)
-          false
-        else
-          error 'Unsupported boolean param value: %s' % value
-        end
-      end
+      #   if %w(true 1 on).include?(value.to_s)
+      #     true
+      #   elsif %w(false 0 off).include?(value.to_s)
+      #     false
+      #   else
+      #     error 'Unsupported boolean param value: %s' % value
+      #   end
+      # end
 
-      def check_integer value, opts={}
-        value.to_i.tap do |test|
-          error localized(:not_integer) if test.to_s != value.to_s
-          error localized(:min_value) % opts[:min] if opts[:min] && test < opts[:min]
-          error localized(:max_value) % opts[:max] if opts[:max] && test > opts[:max]
-        end
-      end
+      # def check_integer value, opts={}
+      #   value.to_i.tap do |test|
+      #     error localized(:not_integer) if test.to_s != value.to_s
+      #     error localized(:min_value) % opts[:min] if opts[:min] && test < opts[:min]
+      #     error localized(:max_value) % opts[:max] if opts[:max] && test > opts[:max]
+      #   end
+      # end
 
-      def check_string value, opts={}
-        value
-          .to_s
-          .sub(/^\s+/, '')
-          .sub(/\s+$/, '')
-      end
+      # def check_string value, opts={}
+      #   value
+      #     .to_s
+      #     .sub(/^\s+/, '')
+      #     .sub(/\s+$/, '')
+      # end
 
-      def check_float value, opts={}
-        value =
-        if opts[:round]
-          value.to_f.round(opts[:round])
-        else
-          value.to_f
-        end
+      # def check_float value, opts={}
+      #   value =
+      #   if opts[:round]
+      #     value.to_f.round(opts[:round])
+      #   else
+      #     value.to_f
+      #   end
 
-        error localized(:min_value) % opts[:min] if opts[:min] && value < opts[:min]
-        error localized(:max_value) % opts[:max] if opts[:max] && value > opts[:max]
+      #   error localized(:min_value) % opts[:min] if opts[:min] && value < opts[:min]
+      #   error localized(:max_value) % opts[:max] if opts[:max] && value > opts[:max]
 
-        value
-      end
+      #   value
+      # end
 
-      def check_date value, opts={}
-        date = DateTime.parse(value)
-        date = DateTime.new(date.year, date.month, date.day)
+      # def check_date value, opts={}
+      #   date = DateTime.parse(value)
+      #   date = DateTime.new(date.year, date.month, date.day)
 
-        check_date_min_max date, opts
-      end
+      #   check_date_min_max date, opts
+      # end
 
-      def check_date_time value, opts={}
-        date = DateTime.parse(value)
-        check_date_min_max date, opts
-      end
+      # def check_date_time value, opts={}
+      #   date = DateTime.parse(value)
+      #   check_date_min_max date, opts
+      # end
 
-      def check_hash value, opts={}
-        value = {} unless value.is_a?(Hash)
+      # def check_hash value, opts={}
+      #   value = {} unless value.is_a?(Hash)
 
-        if opts[:allow]
-          for key in value.keys
-            value.delete(key) unless opts[:allow].include?(key)
-          end
-        end
+      #   if opts[:allow]
+      #     for key in value.keys
+      #       value.delete(key) unless opts[:allow].include?(key)
+      #     end
+      #   end
 
-        value
-      end
+      #   value
+      # end
 
-      def check_email email, opts={}
-        error localized(:email_min) unless email.to_s.length > 7
-        error localized(:email_missing) unless email.include?('@')
-        email.downcase
-      end
+      # def check_email email, opts={}
+      #   error localized(:email_min) unless email.to_s.length > 7
+      #   error localized(:email_missing) unless email.include?('@')
+      #   email.downcase
+      # end
 
-      def check_url url
-        error localized(:url_start) unless url =~ /^https?:\/\/./
-        url
-      end
+      # def check_url url
+      #   error localized(:url_start) unless url =~ /^https?:\/\/./
+      #   url
+      # end
 
       # geolocation point. google maps url will be automaticly converted
       # https://www.google.com/maps/@51.5254742,-0.1057319,13z
-      def check_point value, opts={}
-        parts = value.split(/\s*,\s*/) unless parts.is_a?(Array)
+      # def check_point value, opts={}
+      #   parts = value.split(/\s*,\s*/) unless parts.is_a?(Array)
 
-        error localized(:point_format) unless parts[1]
+      #   error localized(:point_format) unless parts[1]
 
-        for part in parts
-          error localized(:point_format) unless part.include?('.')
-          error localized(:point_format) unless part.length > 5
-        end
+      #   for part in parts
+      #     error localized(:point_format) unless part.include?('.')
+      #     error localized(:point_format) unless part.length > 5
+      #   end
 
-        parts.join(',')
-      end
+      #   parts.join(',')
+      # end
 
-      def check_oib oib, opts={}
-        oib = oib.to_s
+      # def check_oib oib, opts={}
+      #   oib = oib.to_s
 
-        return false unless oib.match(/^[0-9]{11}$/)
+      #   return false unless oib.match(/^[0-9]{11}$/)
 
-        control_sum = (0..9).inject(10) do |middle, position|
-          middle += oib.at(position).to_i
-          middle %= 10
-          middle = 10 if middle == 0
-          middle *= 2
-          middle %= 11
-        end
+      #   control_sum = (0..9).inject(10) do |middle, position|
+      #     middle += oib.at(position).to_i
+      #     middle %= 10
+      #     middle = 10 if middle == 0
+      #     middle *= 2
+      #     middle %= 11
+      #   end
 
-        control_sum = 11 - control_sum
-        control_sum = 0 if control_sum == 10
+      #   control_sum = 11 - control_sum
+      #   control_sum = 0 if control_sum == 10
 
-        if control_sum == oib.at(10).to_i
-          oib.to_i
-        else
-          error 'Wrong OIB'
-        end
-      end
+      #   if control_sum == oib.at(10).to_i
+      #     oib.to_i
+      #   else
+      #     error 'Wrong OIB'
+      #   end
+      # end
 
       def check_model model, opts
         model_name   = opts[:model].to_s.underscore
