@@ -37,6 +37,25 @@ class Joshua
         end
       end
 
+      def check_model model, opts
+        model_name   = opts[:model].to_s.underscore
+        model_schema = MODELS[model_name]
+
+        error "Joshua model for [#{model_name}] not found" unless model_schema
+
+        types, func = *model_schema
+
+        parse = Joshua::Params::Parse.new
+
+        {}.to_hwia.tap do |out|
+          for key, type in types
+            out[key] = parse.check type, model[key]
+          end
+
+          instance_exec(out, &func) if func
+        end
+      end
+
       private
 
       def check_send type, value, opts
@@ -53,8 +72,6 @@ class Joshua
         else
           hard_error 'Unsupported paramter type: %s' % type
         end
-
-        error localized(:not_in_range) if opts[:values] && !opts[:values].include?(result)
 
         result
       end

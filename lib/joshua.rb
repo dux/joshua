@@ -27,8 +27,6 @@ require_relative '../../typero/lib/typero'
 
 require_relative './joshua/params/define'
 require_relative './joshua/params/parse'
-require_relative './joshua/params/types'
-require_relative './joshua/params/types_errors'
 require_relative './joshua/base'
 require_relative './joshua/base_class'
 require_relative './joshua/response'
