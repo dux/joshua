@@ -1,6 +1,6 @@
 require_relative '../loader'
 
-describe Joshua::Model do
+describe Joshua do
   let!(:name) { 'acme gmbh' }
 
   context 'company' do
@@ -26,13 +26,6 @@ describe Joshua::Model do
     it 'passes with good email' do
       response = UserApi.render.update(1, user: { name: name, email: 'better@email.com' })
       expect(response[:success]).to eq(true)
-    end
-  end
-
-  context 'param filtering' do
-    it 'does not allow params' do
-      response = UserApi.render.update(1, user: { name: 'john', email: 'better@email.com', is_admin: true })
-      expect(response[:success]).to eq(false)
     end
   end
 end

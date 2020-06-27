@@ -21,12 +21,6 @@ class ApplicationApi < Joshua
 
   ###
 
-  params :label do |value, opts|
-    value.to_s.downcase.gsub(/\s+/, '_')
-  end
-
-  ###
-
   before do
     @_time = Time.now
   end

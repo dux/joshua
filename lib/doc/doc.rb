@@ -37,7 +37,7 @@ class Joshua
         n.head  do |n|
           n.title 'Joshua Tester'
           n.link({ href: "https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,800,900&display=swap",  rel:"stylesheet" })
-          n.link({ rel:"stylesheet", href:"https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" })
+          n.link({ rel:"stylesheet", href:"https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css" })
           n.script({ src: 'https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js' })
           n.script %[window.api_opts = { mount_on: '#{mount_on}', bearer: '#{bearer}' }]
         end

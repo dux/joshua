@@ -4,8 +4,10 @@ class CompanyApi < ModelApi
   documented
 
   collection do
-    params :country_id, Integer
-    params.is_active false
+    params do
+      country_id  Integer
+      is_active   false
+    end
     def index
       message 'done'
     end
@@ -18,8 +20,8 @@ class CompanyApi < ModelApi
   member do
     desc 'Simple index'
     params do
-      is_active false
-      country?  :string
+      set      :is_active, false
+      country?
     end
     def index
       message 'all ok'

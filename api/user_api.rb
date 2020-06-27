@@ -8,8 +8,8 @@ class UserApi < ModelApi
     anonymous
     unsafe
     detail "For demo purposes, use user=foo and pass=bar"
-    params.user
     params do
+      user
       pass
     end
     def login
@@ -21,15 +21,17 @@ class UserApi < ModelApi
     end
 
     members do
-      params :user, model: :user
+      params do
+        user model: :user
+      end
       def update
         params.user.to_h
       end
 
       def exported
-        
+
       end
     end
   end
- 
+
 end

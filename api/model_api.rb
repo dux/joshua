@@ -12,7 +12,9 @@ class ModelApi < ApplicationApi
 
     desc 'Show object creator'
     desc 'Even more description'
-    params.show_all false
+    params do
+      show_all false
+    end
     def creator
       '@dux'
     end

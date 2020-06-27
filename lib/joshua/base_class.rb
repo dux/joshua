@@ -1,5 +1,6 @@
 class Joshua
   @@after_auto_mount = nil
+  @@opts   = {}
 
   class << self
     # perform auto_mount from a rake call
@@ -177,8 +178,6 @@ class Joshua
       puts '---'
     end
 
-    @@params = Params::Define.new
-
     # sets api mount point
     # mount_on '/api'
     def mount_on what
@@ -208,7 +207,12 @@ class Joshua
     def annotation name, &block
       ANNOTATIONS[name] = block
       self.define_singleton_method name do |*args|
-        @@params.add_annotation name, args
+        unless @method_type
+          error 'Annotation "%s" defined outside the API method blocks (member & collections)' % name
+        end
+
+        @@opts[:annotations] ||= {}
+        @@opts[:annotations][name] = args
       end
     end
 
@@ -228,38 +232,22 @@ class Joshua
     end
     alias :collections :collection
 
-    # There are multiple ways to create params
-    # params :name, String, req: true
-    # params.name!, String
     # params do
-    #   name String, required: true
-    #   name! String
+    #   name? String
+    #   email :email
     # end
-    # params :label do |value, opts|
-    #   # validate is value a label, return coarced label
-    #   # or raise error with error
-    # end
-    def params *args, &block
-      if name = args.first
-        if block
-          # if argument is provided we create a validator
-          Params::Parse.define name, &block
-        else
-          only_in_api_methods!
-          @@params.send *args
-        end
-      elsif block
-        @@params.instance_eval &block
-      else
-        only_in_api_methods!
-        @@params
-      end
+    def params &block
+      raise ArgumentError.new('Block not given for Joshua API method params') unless block_given?
+
+      @@opts[:_typero] = Typero.schema &block
+      @@opts[:params] = @@opts[:_typero].to_h
     end
 
     # api method icon
     # you can find great icons at https://boxicons.com/ - export to svg
     def icon data
       if @method_type
+        ap @method_type
         raise ArgumentError.new('Icons cant be added on methods')
       else
         set :opts, :icon, data
@@ -269,7 +257,7 @@ class Joshua
     # api method description
     def desc data
       if @method_type
-        @@params.add_generic :desc, data
+        @@opts[:desc] = data
       else
         set :opts, :desc, data
       end
@@ -280,7 +268,7 @@ class Joshua
       return if data.to_s == ''
 
       if @method_type
-        @@params.add_generic :detail, data
+        @@opts[:detail] = data
       else
         set :opts, :detail, data
       end
@@ -288,7 +276,7 @@ class Joshua
 
     def allow type
       if @method_type
-        @@params.add_generic :allow, type
+        @@opts[:allow] = type
       else
         raise ArgumentError.new('allow can only be set on methods')
       end
@@ -297,7 +285,7 @@ class Joshua
     # method in available for GET requests as well
     def gettable
       if @method_type
-        @@params.add_generic :gettable
+        @@opts[:gettable] = true
       else
         raise ArgumentError.new('gettable can only be set on methods')
       end
@@ -306,7 +294,7 @@ class Joshua
     # allow methods without @api.bearer token set
     def unsafe
       if @method_type
-        @@params.add_generic :unsafe
+        @@opts[:unsafe] = true
       else
         raise ArgumentError.new('Only api methods can be unsafe')
       end
@@ -363,21 +351,14 @@ class Joshua
       out
     end
 
+    # propagate to typero
     def model name, &block
-      name = name.to_s.underscore
-
-      model = Model.new
-      func  = model.instance_eval &block
-      MODELS[name] = [model]
-      MODELS[name].push func if func.is_a?(Proc)
+      Typero.schema name, &block
     end
-    
-    def export name, opts={}, &block
-      if block_given?
-        Exporter.define name, opts, &block
-      else
-        Exporter.export name, opts
-      end
+
+    # propagate to typero
+    def export name, &block
+      Typero.export name, &block
     end
 
     # here we capture member & collection metods
@@ -385,7 +366,9 @@ class Joshua
       return if name.to_s.start_with?('_api_')
       return unless @method_type
 
-      set @method_type, name, @@params.fetch_and_clear_opts
+      set @method_type, name, @@opts
+
+      @@opts = {}
 
       alias_method "_api_#{@method_type}_#{name}", name
       remove_method name

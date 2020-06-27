@@ -50,7 +50,18 @@ class Joshua
       unwanted = %w(all member collection)
       {}.tap do |doc|
         for el in Joshua.documented
-          doc[el.to_s.sub(/Api$/, '').underscore] = el.opts.filter { |k, _| !unwanted.include?(k.to_s.split('_')[1]) }
+          doc[el.to_s.sub(/Api$/, '').underscore] = el.opts.filter do |k, v|
+            for k1, v1 in v
+              if v1.is_a?(Hash)
+                for k2 in v1.keys
+                  # remove Typero
+                  v1.delete(k2) if k2.to_s.start_with?('_')
+                end
+              end
+            end
+
+            !unwanted.include?(k.to_s.split('_')[1])
+          end
         end
       end
     end
@@ -86,8 +97,6 @@ class Joshua
           }
         },
       }
-
-      item[:params] ||= { 'user[name]' => {} }
 
       for key, value in (item[:params] || {})
         out[:request][:body] ||= { mode: 'formdata', formdata: [] }
