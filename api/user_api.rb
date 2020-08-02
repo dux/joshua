@@ -20,18 +20,26 @@ class UserApi < ModelApi
       end
     end
 
-    members do
-      params do
-        user model: :user
-      end
-      def update
-        params.user.to_h
-      end
-
-      def exported
-
-      end
+    def call_me_in_child
+      super! * 2
     end
   end
 
+  members do
+    params do
+      user model: :user
+    end
+    def update
+      params.user.to_h
+    end
+
+    def exported
+
+    end
+
+    def call_me_in_child
+      super!
+      @number * 2
+    end
+  end
 end

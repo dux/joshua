@@ -2,7 +2,9 @@ require_relative '../loader'
 
 describe 'dev' do
   it 'expects to capture error' do
+    $no_error_print = true
     response = GenericApi.render :about
+    $no_error_print = false
     expect(response).to eq({:error=>{:messages=>["Error happens"]}, :meta=>{:ip=>"1.2.3.4"}, :status=>500, :success=>false})
   end
 

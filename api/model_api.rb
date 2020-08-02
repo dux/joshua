@@ -1,4 +1,10 @@
 class ModelApi < ApplicationApi
+  collection do
+    def call_me_in_child
+      @number = 2345
+    end
+  end
+
   member do
     before do
       id = @api.id.to_s == @api.id.to_i.to_s ? @api.id.to_i : nil
@@ -22,6 +28,10 @@ class ModelApi < ApplicationApi
     desc 'Update the model'
     def update
       'updated'
+    end
+
+    def call_me_in_child
+      @number = 1234
     end
   end
 end

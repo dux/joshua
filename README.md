@@ -742,7 +742,7 @@ class ApplicaitonApi
     #   is not allowed to change it
     proc do |data|
       if !data[:is_admin].nil? && !user.can.admin?
-        error 'You are not allowed change the value of :is_admin attribute' 
+        error 'You are not allowed change the value of :is_admin attribute'
       end
     end
   end
@@ -943,41 +943,33 @@ end
 # /api/user/foo # { message: 'bar' }
 ```
 
-<a name="exporters"></a>
-### Exporter
+### Calling super methods
 
-Inside exporter user will be available if one following is defined: `User.current`, `Current.user` or `Thread.current[:current_user]`.
+If you want to call `super` to call super method inside api methods, you need to call them with `super!`. You can also pass a super method name as a argument.
 
 ```ruby
-class ApplicationApi
-  export Company do |model, out|
-    out[:name]     = model.name
-    out[:address]  = model.address
-    out[:creator]  = export User.find(model.created_by)
-    out[:revenue]  = model.last_revenue if user.can.admin?
-  end
-
-  export User, include_missing: true do |model, out|
-    out[:name]     = model.name
-    out[:email]    = model.email
-    out[:company]  = export Company.find(model.company_id)
-    out[:is_admin] = model.is_admin ? 'YES' || 'no'
+class ParentApi < Joshua
+  collection do
+    def foo
+      123
+    end
   end
 end
 
-# And to export from anywhere
+class ChildApi < ParentApi
+  collection do
+    def foo
+      super! # 122
+      345
+    end
 
-Joshua.export @user
-Joshua.export @company
-Joshua.export @company, exporter: 'company/custom'
-
-# or just export in api methods
-def update
-  # ...
-  export @user
+    def bar
+      foo         # 345
+      super! :foo # 123
+    end
+  end
 end
 ```
-
 
 ### As a plugin
 

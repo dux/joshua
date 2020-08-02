@@ -4,6 +4,14 @@ class Joshua
   class Response
     attr_reader :errors
 
+    def self.auto_format error
+      response = new nil
+      response.error error.message, code: error.is_a?(Joshua::Error) ? 400 : 500
+      response.render
+    end
+
+    ###
+
     def initialize api
       @api         = api
       @out         = {}
@@ -25,8 +33,12 @@ class Joshua
     end
 
     # human readable response message
-    def message value
-      @message = value
+    def message value, force=false
+      if force
+        @message = value
+      else
+        @message ||= value
+      end
     end
 
     # api meta response, any data is allowed

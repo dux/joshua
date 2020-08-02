@@ -6,7 +6,7 @@ class ApplicationApi < Joshua
   rescue_from 405, '$ not found'
 
   rescue_from :all do |error|
-    ap [error.message, error.backtrace.reject{ |_| _.include?('/.rvm/') }] unless ENV['RACK_ENV'] == 'test'
+    ap [error.message, error.backtrace.reject{ |_| _.include?('/.rvm/') }] unless $no_error_print
 
     response.error 'Error happens', status: 500
   end

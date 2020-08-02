@@ -7,7 +7,6 @@ require_relative '../api/company_api'
 require_relative '../api/user_api'
 
 require_relative '../api/models.rb'
-require_relative '../api/exports.rb'
 
 class Object
   def pp data

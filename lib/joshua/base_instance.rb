@@ -176,21 +176,11 @@ class Joshua
     response.message data
   end
 
-  def export data, type=nil
-    if data.nil?
-      nil
-    elsif data.respond_to?(:each)
-      data
-        .map { |el| export_call el, type }
-        .reject { |el| el.empty? }
-    else
-      export_call data, type
-    end
+  def super! name=nil
+    type   = @api.id ? :member : :collection
+    name ||= caller[0].split('`')[1].sub("'", '')
+    name   = "_api_#{type}_#{name}"
+    self.class.superclass.instance_method(name).bind(self).call
   end
 
-  def export_call data, type
-    type ||= data.class
-
-    # hsh.delete_if { |_, v| v.empty? }
-  end
 end

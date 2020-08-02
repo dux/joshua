@@ -28,4 +28,16 @@ describe Joshua do
       expect(response[:success]).to eq(true)
     end
   end
+
+  context 'parent - child' do
+    it 'test collection' do
+      response = UserApi.render.call_me_in_child
+      expect(response[:data]).to eq(4690)
+    end
+
+    it 'test member' do
+      response = UserApi.render.call_me_in_child(1)
+      expect(response[:data]).to eq(2468)
+    end
+  end
 end

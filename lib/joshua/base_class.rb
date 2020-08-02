@@ -134,6 +134,9 @@ class Joshua
 
       api = api_class.new action, **opts
       api.execute_call
+    rescue => error
+      error_print error if opts[:development]
+      Response.auto_format error
     end
 
     # rescue_from CustomError do ...
@@ -354,11 +357,6 @@ class Joshua
     # propagate to typero
     def model name, &block
       Typero.schema name, &block
-    end
-
-    # propagate to typero
-    def export name, &block
-      Typero.export name, &block
     end
 
     # here we capture member & collection metods
