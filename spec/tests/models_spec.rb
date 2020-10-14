@@ -9,7 +9,7 @@ describe Joshua do
       expect(response[:data][:name]).to eq(name)
     end
 
-    it 'strips out undefined fileds' do
+    it 'strips out undefined fields' do
       response = CompanyApi.render.update(1, company: { name: name, not_defined: 'nowhere 123' })
       expect(response[:data][:name]).to eq(name)
       expect(response[:data][:address]).to eq(nil)

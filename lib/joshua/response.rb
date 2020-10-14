@@ -59,6 +59,8 @@ class Joshua
 
       @status ||= status if status
 
+      text = text.to_s
+
       @errors[:code]     ||= code if code
       @errors[:messages] ||= []
       @errors[:messages].push text unless @errors[:messages].include?(text)
@@ -75,9 +77,14 @@ class Joshua
       @errors[:details][name] = desc
     end
 
-    def data value
-      @data ||= value
+    def data value=:_undefind
+      if value == :_undefind
+        @data
+      else
+        @data = value
+      end
     end
+    alias :data= :data
 
     def data?
       !@data.nil?

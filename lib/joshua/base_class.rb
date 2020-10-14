@@ -250,7 +250,6 @@ class Joshua
     # you can find great icons at https://boxicons.com/ - export to svg
     def icon data
       if @method_type
-        ap @method_type
         raise ArgumentError.new('Icons cant be added on methods')
       else
         set :opts, :icon, data

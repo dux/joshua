@@ -130,7 +130,7 @@ class Joshua
     self.class.ancestors.reverse.map(&:to_s).each do |klass|
       if before_list = (OPTS.dig(klass, name.to_sym) || [])
         for before in before_list
-          instance_exec &before
+          instance_exec response.data, &before
         end
       end
     end
