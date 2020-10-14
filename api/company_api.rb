@@ -38,6 +38,16 @@ class CompanyApi < ModelApi
     def update
       params.company.to_h
     end
+
+    define :foo do
+      params do
+        bar Integer
+      end
+
+      proc do
+        params.bar * 3
+      end
+    end
   end
 
   def index

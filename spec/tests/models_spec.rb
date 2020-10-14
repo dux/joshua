@@ -15,6 +15,11 @@ describe Joshua do
       expect(response[:data][:address]).to eq(nil)
       expect(response[:data][:not_defined]).to eq(nil)
     end
+
+    it 'allows alternative method define' do
+      response = CompanyApi.render.foo(1, { bar: 3 })
+      expect(response[:data]).to eq(9)
+    end
   end
 
   context 'user' do

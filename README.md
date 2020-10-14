@@ -265,11 +265,15 @@ class UsersApi < ModelAPI
       message 'You deleted yourself'
     end
 
-    desc 'Generate new user access token'
+    # you can use define to create an api method, to have all nested under readable block
+    # just be sure that you return a proc or labmda as a last argument
     # /api/users/:id/re_tokenize
-    def re_tokenize
-      @user.update token: Crypt.random(40)
-      messsage 'New token generated'
+    define :re_tokenize do
+      desc 'Generate new user access token'
+      proc do
+        @user.update token: Crypt.random(40)
+        messsage 'New token generated'
+      end
     end
   end
 end

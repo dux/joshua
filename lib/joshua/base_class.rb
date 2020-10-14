@@ -219,10 +219,27 @@ class Joshua
       end
     end
 
+    # aleternative way to define a api function
+    # members do
+    #   define :foo do
+    #     params {}
+    #     proc {}
+    #   end
+    # end
+    def define name, &block
+      func = class_exec &block
+
+      if func.is_a?(Proc)
+        self.define_method(name, func)
+      else
+        raise 'Member block has to return a Func object'
+      end
+    end
+
     # /api/companies/1/show
-    def member &block
+    def member name=nil, &block
       @method_type = :member
-      class_exec &block
+      func = class_exec &block
       @method_type = nil
     end
     alias :members :member
