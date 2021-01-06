@@ -18,6 +18,7 @@ Gem::Specification.new 'joshua' do |gem|
   gem.add_runtime_dependency 'json'
   gem.add_runtime_dependency 'html-tag'
   gem.add_runtime_dependency 'hash_wia'
+  gem.add_runtime_dependency 'typero'
   gem.add_runtime_dependency 'rack'
   gem.add_runtime_dependency 'http'
 end

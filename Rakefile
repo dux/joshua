@@ -19,9 +19,9 @@ end
 
 desc 'Dump raw JSON from fixtures'
 task dump: :env do
-  for klass in Joshua::ACTIVATED
+  for klass in Joshua.documented
     puts klass
-      ap klass.opts
+        puts JSON.pretty_generate klass.opts
     puts
   end
 end
@@ -29,4 +29,14 @@ end
 desc 'Sinatra demo web'
 task :web do
   system 'find . | grep -v .git | entr -r ruby web/sinatra.rb'
+end
+
+desc 'Dump JSON schema'
+task json: :env do
+  puts JSON.pretty_generate UserApi.opts
+  # for klass in Joshua.documented
+  #   puts klass
+  #       puts `pretty_generate klass.opts
+  #   puts
+  # end
 end

@@ -237,7 +237,7 @@ class Joshua
     end
 
     # /api/companies/1/show
-    def member name=nil, &block
+    def member &block
       @method_type = :member
       func = class_exec &block
       @method_type = nil

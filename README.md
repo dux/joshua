@@ -15,6 +15,24 @@ Joshua is opinionated [API](https://learn.g2.com/api) implementation for [Ruby](
 
 <br />
 
+### Installation
+
+to install
+
+`gem install joshua`
+
+or in Gemfile
+
+`gem 'joshua'`
+
+or in Gemfile from GitHub
+
+`gem 'joshua', git: 'git@github.com:dux/joshua.git'`
+
+and to use
+
+`require 'joshua'`
+
 ### Components
 
 * Request Flow

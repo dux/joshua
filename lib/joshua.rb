@@ -20,10 +20,9 @@ unless ''.respond_to?(:dasherize)
 end
 
 require 'json'
+require 'typero'
 require 'html-tag'
 require 'hash_wia'
-
-require_relative '../../typero/lib/typero'
 
 require_relative './joshua/base_instance'
 require_relative './joshua/base_class'
