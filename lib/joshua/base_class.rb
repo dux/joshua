@@ -37,7 +37,10 @@ class Joshua
     # auto mount to a root
     # * display doc in a root
     # * call methods if possible /api/v1.comapny/1/show
-    def auto_mount request:, response: nil, mount_on: nil, bearer: nil, development: false
+    def auto_mount api_host:, mount_on: nil, bearer: nil, development: false
+      request  = api_host.request
+      response = api_host.response
+
       mount_on ||= OPTS[:api][:mount_on] || '/'
       mount_on   = [request.base_url, mount_on].join('') unless mount_on.to_s.include?('//')
 
@@ -53,8 +56,7 @@ class Joshua
 
         # class: klass, params: params, bearer: bearer, request: request, response: response, development: development
         opts = {}
-        opts[:request]     = request
-        opts[:response]    = response
+        opts[:api_host]    = api_host
         opts[:development] = development
         opts[:bearer]      = bearer
 

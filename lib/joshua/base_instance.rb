@@ -17,14 +17,14 @@ class Joshua
     :opts,
     :params,
     :raw,
-    :rack_response,
+    :api_host,
     :request,
     :response,
     :uid
 
   attr_reader :api
 
-  def initialize action, id: nil, bearer: nil, params: {}, opts: {}, request: nil, response: nil, development: false
+  def initialize action, params: {}, opts: {}, development: false, id: nil, bearer: nil, api_host: nil
     @api = INSTANCE.new
 
     if action.is_a?(Array)
@@ -37,12 +37,12 @@ class Joshua
     @api.bearer        = bearer
     @api.id          ||= id
     @api.action        = @api.action.to_sym
-    @api.request       = request
+    @api.request       = api_host ? api_host.request : nil
     @api.method_opts   = self.class.opts.dig(@api.id ? :member : :collection, @api.action) || {}
     @api.development   = !!development
-    @api.rack_response = response
     @api.params        = HashWia.new params
     @api.opts          = HashWia.new opts
+    @api.api_host      = api_host
     @api.response      = ::Joshua::Response.new @api
   end
 
@@ -140,8 +140,8 @@ class Joshua
     if block_given?
       @api.raw = yield
 
-      if @api.rack_response
-        @api.rack_response.header['Content-Type'] = content_type || (@api.raw[0] == '{' ? 'application/json' : 'text/plain')
+      api_host do
+        response.header['Content-Type'] = content_type || (@api.raw[0] == '{' ? 'application/json' : 'text/plain')
       end
     elsif content_type
       response.data = content_type
@@ -181,6 +181,15 @@ class Joshua
     name ||= caller[0].split('`')[1].sub("'", '')
     name   = "_api_#{type}_#{name}"
     self.class.superclass.instance_method(name).bind(self).call
+  end
+
+  # execute actions on api host
+  def api_host &block
+    if block_given? && @api.api_host
+      @api.api_host.instance_exec self, &block
+    end
+
+    @api.api_host
   end
 
 end

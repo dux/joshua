@@ -93,6 +93,7 @@ end
 
 class UsersApi < ModelApi
   collection do
+    # you can define methods as ruby methods
     desc   'Login test'
     detail 'user + pass = foo + bar'
     params do
@@ -108,13 +109,33 @@ class UsersApi < ModelApi
         error 'Bad user name or pass'
       end
     end
+
+    # or wrap them in define block for better visual semantics
+    define :login do
+      desc   'Login test'
+      detail 'user + pass = foo + bar'
+      params do
+        user
+        pass
+      end
+      proc do # or lambda or anything that responds to call
+        if params.user == 'foo' && params.pass == 'bar'
+          message 'Login ok'
+
+          'token-abcdefg'
+        else
+          error 'Bad user name or pass'
+        end
+      end
+    end
   end
 
   member do
     def update
     end
 
-    def delete
+    define :delete do
+      lambda {}
     end
   end
 
