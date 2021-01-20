@@ -1087,11 +1087,11 @@ mount ApplicationApi => '/api'
 match '/api/**', to: 'api#mount', via: [:get, :post]
 
 # app/controllers/api_controller.rb
-class ApiController < ApplicationController
-  def mount
+class ApiController < ApplicationController         
+  def mount 
     ApplicationApi.auto_mount mount_on: '/api',
-      request: request,
-      response: response,
+      api_host: self,
+      bearer: user.try(:token),
       development: Rails.env.development?
   end
 end
