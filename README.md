@@ -64,12 +64,14 @@ and to use
 
 Joshua **directly** maps requests to method calls, without routing and it also can work mounted directly on the rack interface, as demonstrated [here](https://github.com/dux/joshua/blob/master/demos/simple/config.ru).
 
-Knowing this, there can not be "faster" api framework, there can only be some other one equally fast or slower :)
-
+By using plain ruby classes, direct mapping without routing and provideing direct `rack` access if needed, it is hard to beat Egoist in pure speed.
 
 ### Look and feel
 
-Notice how member and collections exist in separate namespace.
+* `member (/foo/123/bar)` and `collection (/foo/bar)` exist in separate namespace. You can have `member` and `collection` `update` methods if you need to.
+* `rescue_from`, `before` and `after` filters are supported.
+* you can inherit methods from parent class just as in plain ruby. Define generic `show`, `create`, `update` and `delete` methods and inherit them in parent classes.
+* many more stuff
 
 ```ruby
 class ModelApi < Joshua
@@ -248,8 +250,10 @@ class UsersApi < ModelAPI
   collection do
     # describe the method
     desc 'Signup via email to app'
-    # define email param, with type of email
-    params.email! :email
+    # define email param, with type of email, required
+    params do
+      email :email
+    end
     # define "/api/users/signup" method
     def signup
       # deliver magic login link
@@ -262,9 +266,10 @@ class UsersApi < ModelAPI
     # params can be defined as a block as well
     params do
       # method name in a block is paramter name, and it is required
-      user String, required: true
-      # if you add bang, it is required
-      pass! String
+      # String is defult type, you can skip writeing it
+      user String
+      # if you add question mark, it is not required
+      pass? :string
     end
     # /api/users/login
     unsafe
@@ -573,14 +578,16 @@ annotation :hcaptcha! do
 end
 
 collection do
-  desc 'Lost password email (hcaptcha required)'
-  hcaptcha!
-  params do
-    email :email
-  end
-  def lost_password
-    Mailer.lost_pass params.email
-    'Mail sent'
+  define :lost_password do
+    desc 'Lost password email (hcaptcha required)'
+    hcaptcha!
+    params do
+      email :email
+    end
+    proc do
+      Mailer.lost_pass params.email
+      'Mail sent'
+    end
   end
 end
 
@@ -758,7 +765,7 @@ end
 
 Methods marked as unsafe will set option `@api.opts.unsafe == true`
 
-You can use that information not to check for bearer auth token.
+You can use that information not to check for bearer auth token in `before` filter.
 
 <a name="models"></a>
 ### Models
