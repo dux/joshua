@@ -9,8 +9,9 @@ class Joshua
     def postman
       out = {
         info: {
-          _postman_id: @api[:request].url,
-          name: @api[:request].host,
+          _postman_id: request.url,
+          _bearer_token: @api[:bearer],
+          name: request.host,
           schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
         },
         item: []
@@ -43,7 +44,7 @@ class Joshua
         out[:item].push hash
       end
 
-      out.to_json
+      @api[:development] ? JSON.pretty_generate(out) : out.to_json
     end
 
     def raw
@@ -71,7 +72,7 @@ class Joshua
     def postman_add_method type, table, name, item
       path = []
 
-      base = @api[:request].url.split('/_/').first
+      base = request.url.split('/_/').first
       base = base.split('/')
 
       path.push base.pop
@@ -91,19 +92,37 @@ class Joshua
           url: {
             raw:      ([base] + path).join('/'),
             protocol: base.split(':').first,
-            host:     @api[:request].host.split('.'),
-            port:     @api[:request].port,
+            host:     request.host.split('.'),
+            port:     request.port,
             path:     path
-          }
-        },
+          },
+        }
       }
 
       for key, value in (item[:params] || {})
         out[:request][:body] ||= { mode: 'formdata', formdata: [] }
-        out[:request][:body][:formdata].push({ key: key, description: value[:type] })
+
+        formdata_custom = 'formdata_%s' % value[:type]
+
+        # if value[:type] == 'model' and key == 'user' you can define "formdata_model"
+        # that returns list of fields for defined model
+        formdata_value =
+        if respond_to?(formdata_custom)
+          opts = { key: key, value: value, name: name, type: type, group: table }
+          [send(formdata_custom, opts.to_hwia)].flatten
+        else
+          { key: key, description: value[:type] }
+        end
+
+        formdata_value = [formdata_value] unless formdata_value.is_a?(Array)
+        out[:request][:body][:formdata].push *formdata_value
       end
 
       out
+    end
+
+    def request
+      @api[:api_host].request
     end
   end
 end
