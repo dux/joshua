@@ -5,14 +5,16 @@ class UsersApi < ModelApi
   generate :update
 
   collection do
-    desc 'Signup via email to app'
-    hcaptcha!
-    params do
-      email :email
-    end
-    def signup
-      Mailer.email_login(params.email).deliver
-      'Email with login link sent'
+    define :signup do
+      desc 'Signup via email to app'
+      hcaptcha!
+      params do
+        email :email
+      end
+      proc do
+        Mailer.email_login(params.email).deliver
+        'Email with login link sent'
+      end
     end
   end
 
@@ -25,16 +27,23 @@ class UsersApi < ModelApi
 
     ###
 
-    def delete
-      @user.update is_deleted: true, name: 'DELETED BY USER'
-      message 'You deleted yourself'
+    define :delete do
+      desc 'Delete user by disabling it'
+      proc do
+        @user.update is_deleted: true, name: 'DELETED BY USER'
+        message 'You deleted a user'
+      end
     end
 
-    def undelete
-      @user.update is_deleted: false, name: params.name
-      messsage 'You undeleted yourself'
+    define :undelete do
+      desc 'Undelete user by enableing it'
+      proc do
+        @user.update is_deleted: false, name: params.name
+        messsage 'You undeleted a user'
+      end
     end
 
+    # or defined as simple proc not via define notation
     desc 'Generate new user access token'
     def re_tokenize
       @user.update token: Crypt.random(40)
