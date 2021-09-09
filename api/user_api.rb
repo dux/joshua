@@ -33,10 +33,6 @@ class UserApi < ModelApi
       params.user.to_h
     end
 
-    def exported
-
-    end
-
     def call_me_in_child
       super!
       @number * 2

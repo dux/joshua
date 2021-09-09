@@ -24,7 +24,7 @@ class Joshua
 
   attr_reader :api
 
-  def initialize action, params: {}, opts: {}, development: false, id: nil, bearer: nil, api_host: nil
+  def initialize action, params: {}, opts: {}, development: false, id: nil, bearer: nil, api_host: nil, html_safe: true
     @api = INSTANCE.new
 
     if action.is_a?(Array)
@@ -32,6 +32,10 @@ class Joshua
       @api.id, @api.action = action[1] ? action : [nil, action[0]]
     else
       @api.action = action
+    end
+
+    if html_safe
+      params = Joshua.make_hash_html_safe params
     end
 
     @api.bearer        = bearer

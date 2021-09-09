@@ -192,9 +192,9 @@ class Joshua
     # if you want to make API DOC public use "documented"
     def documented
       if self == Joshua
-        DOCUMENTED.map(&:to_s).sort.map(&:constantize)
+        DOCUMENTED.sort.uniq.map(&:constantize)
       else
-        DOCUMENTED.push self unless DOCUMENTED.include?(self)
+        DOCUMENTED.push to_s unless DOCUMENTED.include?(to_s)
       end
     end
 
@@ -388,6 +388,16 @@ class Joshua
 
       alias_method "_api_#{@method_type}_#{name}", name
       remove_method name
+    end
+
+    def make_hash_html_safe hash
+      hash.each do |k, v|
+        if v.is_a?(Hash)
+          make_hash_html_safe v
+        elsif v.class == String
+          hash[k] = v.gsub('<', '&lt;')
+        end
+      end
     end
 
     private
