@@ -20,6 +20,7 @@ class UserApi < ModelApi
       end
     end
 
+    allow :delete
     def call_me_in_child
       super! * 2
     end

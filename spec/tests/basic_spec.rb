@@ -47,4 +47,8 @@ describe 'dev' do
     response = UserApi.render.login user: 'foo', pass: 'bar'
     expect(response[:success]).to eq(true)
   end
+
+  it 'defines allowed method' do
+    expect(UserApi.opts.dig(:collection, :call_me_in_child, :allow)).to eq 'DELETE'
+  end
 end

@@ -51,11 +51,11 @@ class Joshua
   end
 
   def execute_call
+    allow_type   = @api.method_opts[:allow] || 'POST'
     request_type = @api.request&.request_method || 'POST'
+    is_allowed   = @api.development || ['POST', allow_type].include?(request_type)
 
-    if !@api.development && @api.request && @api.request.request_method == request_type
-      response.error '%s request is not allowed' % request_type
-    else
+    if is_allowed
       begin
         parse_api_params
         parse_annotations unless response.error?
@@ -78,6 +78,8 @@ class Joshua
 
       # we execute generic after block in case of error or no
       execute_callback :after_all
+    else
+      response.error '%s request is not allowed' % request_type
     end
 
     @api.raw || response.render

@@ -111,8 +111,7 @@ class Joshua
         return RenderProxy.new self
       end
 
-      api_class =
-      if klass = opts.delete(:class)
+      api_class = if klass = opts.delete(:class)
         # /api/_/foo
         if klass == '_'
           klass = Joshua::DocSpecial.new(opts)
@@ -128,8 +127,6 @@ class Joshua
         klass[klass.length-1] += '_api'
         klass = klass.join('/').classify
 
-        ap ''.method(:classify).source_location
-
         begin
           klass.constantize
         rescue NameError => e
@@ -142,7 +139,6 @@ class Joshua
       api = api_class.new action, **opts
       api.execute_call
     rescue => error
-      # ap [error, error.backtrace[0,5]]
       error_print error if opts[:development]
       Response.auto_format error
     end
@@ -306,11 +302,13 @@ class Joshua
     # if defined, access will be allowed via POST + allowed method
     def allow type
       if @method_type
-        unless %i(get post patch delete head).include?(type)
-          raise ArgumentError.new('%s is not allowed http method type')
+        type = type.to_s.to_sym
+
+        unless %i(get head post put patch delete trace).include?(type)
+          raise ArgumentError.new('"%s" is not allowed http method type' % type)
         end
 
-        @@opts[:allow] = type
+        @@opts[:allow] = type.to_s.upcase
       else
         raise ArgumentError.new('allow can only be set on methods')
       end

@@ -27,7 +27,10 @@ class ApplicationApi < Joshua
 
   after do
     response[:ip] = @api.request ? @api.request.ip : '1.2.3.4'
-    response.meta :speed_ms, ((Time.now - @_time)*1000).round(3) unless ENV['RACK_ENV'] == 'test'
+
+    if @_time
+      response.meta :speed_ms, ((Time.now - @_time)*1000).round(3) unless ENV['RACK_ENV'] == 'test'
+    end
   end
 
   after_auto_mount do |nav, opts|
