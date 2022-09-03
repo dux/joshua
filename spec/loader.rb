@@ -5,4 +5,5 @@ require 'bundler'
 
 Bundler.require :test
 
+require_relative './lib/blank'
 require_relative './base'

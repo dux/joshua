@@ -17,4 +17,10 @@ class Object
       ap data
     end
   end
+
+  def rr data
+    puts '- start: %s - %s' % [data.class, caller[0].sub(__dir__+'/', '')]
+    ap data
+    puts '- end'
+  end
 end

@@ -51,7 +51,7 @@ class Joshua
     end
 
     # add api response error
-    def error text, args={}
+    def error messages, args={}
       code   = args.delete(:code)
       status = args.delete(:status)
 
@@ -59,11 +59,18 @@ class Joshua
 
       @status ||= status if status
 
-      text = text.to_s
-
       @errors[:code]     ||= code if code
       @errors[:messages] ||= []
-      @errors[:messages].push text unless @errors[:messages].include?(text)
+
+      unless messages.class == Array
+        messages = [messages.to_s]
+      end
+
+      for text in messages
+        if text.present? && text[0, 2] != '["' && !@errors[:messages].include?(text)
+          @errors[:messages].push text
+        end
+      end
     end
 
     def error?

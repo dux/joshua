@@ -51,8 +51,10 @@ class Joshua
   end
 
   def execute_call
-    if !@api.development && @api.request && @api.request.request_method == 'GET' && !@api.method_opts[:gettable]
-      response.error 'GET request is not allowed'
+    request_type = @api.request&.request_method || 'POST'
+
+    if !@api.development && @api.request && @api.request.request_method == request_type
+      response.error '%s request is not allowed' % request_type
     else
       begin
         parse_api_params
@@ -104,18 +106,21 @@ class Joshua
   end
 
   def resolve_api_body &block
+    # if we have model defiend, we execute member otherwise collection
+    type = @api.id ? :member : :collection
+    api_method = '_api_%s_%s' % [type, @api.action]
+
+    unless respond_to?(api_method)
+      raise Joshua::Error, "Api method #{type}:#{@api.action} not found"
+    end
+
     # execute before "in the wild"
     # model @api.pbject should be set here
     execute_callback :before_all
 
     instance_exec &block if block
 
-    # if we have model defiend, we execute member otherwise collection
-    type   = @api.id ? :member : :collection
-
     execute_callback 'before_%s' % type
-    api_method = '_api_%s_%s' % [type, @api.action]
-    raise Joshua::Error, "Api method #{type}:#{@api.action} not found" unless respond_to?(api_method)
 
     data = send api_method
     response.data data unless response.data?
@@ -160,7 +165,9 @@ class Joshua
 
   # inline error raise
   def error text, args={}
-    puts 'JOSHUA API Error: %s (%s)' % [text, caller[0]] if @api.development
+    if @api.development
+      puts 'JOSHUA API Error: %s (%s)' % [text, caller[0]]
+    end
 
     if err = RESCUE_FROM[text]
       if err.is_a?(Proc)
@@ -170,6 +177,7 @@ class Joshua
         response.error err, args
       end
     else
+      rr text
       response.error text, args
     end
 

@@ -102,9 +102,11 @@ class Joshua
     end
 
     # renders api doc or calls api class + action
-    def render action=nil, opts={}
+    def render action = nil, opts = {}
       if action
-        return error 'Action not defined' unless action[0]
+        unless action[0]
+          return error 'Action not defined'
+        end
       else
         return RenderProxy.new self
       end
@@ -137,6 +139,7 @@ class Joshua
       api = api_class.new action, **opts
       api.execute_call
     rescue => error
+      ap [error, error.backtrace[0,5]]
       error_print error if opts[:development]
       Response.auto_format error
     end
@@ -295,21 +298,35 @@ class Joshua
       end
     end
 
+    # allow alternative method access
+    # allow :get
+    # if defined, access will be allowed via POST + allowed method
     def allow type
       if @method_type
+        unless %i(get post patch delete head).include?(type)
+          raise ArgumentError.new('%s is not allowed http method type')
+        end
+
         @@opts[:allow] = type
       else
         raise ArgumentError.new('allow can only be set on methods')
       end
     end
 
-    # method in available for GET requests as well
-    def gettable
-      if @method_type
-        @@opts[:gettable] = true
-      else
-        raise ArgumentError.new('gettable can only be set on methods')
+    # define response content type (defaults to JSON)
+    def content_type name
+      if name.is_class == Symbol
+        name = case name
+        when :json
+          'application/json'
+        when :text
+          'text/plain'
+        else
+          raise ArgumentError.new('content-type "%s" is not recognized')
+        end
       end
+
+      @@opts[:content_type] = name
     end
 
     # allow methods without @api.bearer token set
@@ -391,7 +408,7 @@ class Joshua
     end
 
     def make_hash_html_safe hash
-      hash.each do |k, v|
+      (hash || {}).each do |k, v|
         if v.is_a?(Hash)
           make_hash_html_safe v
         elsif v.class == String

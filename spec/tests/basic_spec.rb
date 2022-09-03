@@ -10,12 +10,12 @@ describe 'dev' do
   end
 
   it 'tests valid mememer methods params' do
-    expect(opts.dig(:member, :index, :params, :is_active)).to eq({ type: :boolean, default: false, required: false })
+    expect(opts.dig(:member, :index, :params, :is_active)).to eq({ type: :boolean, default: false, required: true })
     expect(opts.dig(:member, :show)).to eq({})
   end
 
   it 'tests valid deep method defines (from parent ModelApi)' do
-    expect(opts.dig(:member, :creator, :params)).to eq({:show_all=>{:default=>false, :type=>:boolean, :required=>false}})
+    expect(opts.dig(:member, :creator, :params)).to eq({:show_all=>{:default=>false, :type=>:boolean, :required=>true}})
   end
 
   it 'adds method descriptions' do

@@ -22,7 +22,7 @@ class Joshua
     }
 
     def tag
-      HtmlTagBuilder
+      HtmlTag
     end
 
     def misc_file name
