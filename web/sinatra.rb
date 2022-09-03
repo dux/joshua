@@ -1,9 +1,10 @@
 require 'rubygems'
 require 'bundler'
 
-Bundler.require :default, :web
+Bundler.require :dev, :web
 
 require './spec/base'
+require_relative '../spec/lib/blank'
 
 ###
 

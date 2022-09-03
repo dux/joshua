@@ -1,22 +1,6 @@
-unless ''.respond_to?(:dasherize)
-  require 'dry/inflector'
-
-  class String
-    %w(
-      classify
-      constantize
-      dasherize
-      ordinalize
-      pluralize
-      singularize
-      tableize
-      underscore
-    ).each do |name|
-      define_method name do
-        Dry::Inflector.new.send(name, self)
-      end
-    end
-  end
+unless ''.respond_to?(:classify)
+  require 'sequel'
+  Sequel.extension :inflector
 end
 
 require 'json'

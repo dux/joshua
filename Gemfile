@@ -2,10 +2,11 @@ source 'http://rubygems.org'
 
 gemspec
 
-group :test do
+group :dev do
+  gem 'sequel'
+  gem 'rspec'
   gem 'byebug'
   gem 'http'
-  gem 'rspec'
   gem 'amazing_print'
 end
 

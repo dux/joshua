@@ -126,9 +126,12 @@ class Joshua
 
         klass = klass.split('/') if klass.is_a?(String)
         klass[klass.length-1] += '_api'
+        klass = klass.join('/').classify
+
+        ap ''.method(:classify).source_location
 
         begin
-          klass.join('/').classify.constantize
+          klass.constantize
         rescue NameError => e
           return error 'API class "%s" not found' % klass
         end
@@ -139,7 +142,7 @@ class Joshua
       api = api_class.new action, **opts
       api.execute_call
     rescue => error
-      ap [error, error.backtrace[0,5]]
+      # ap [error, error.backtrace[0,5]]
       error_print error if opts[:development]
       Response.auto_format error
     end
@@ -178,7 +181,7 @@ class Joshua
 
     def error_print error
       puts
-      puts 'Joshua error dump'.red
+      puts 'Joshua error dump'
       puts '---'
       puts '%s: %s' % [error.class, error.message]
       puts '---'

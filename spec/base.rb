@@ -1,5 +1,9 @@
-require_relative '../lib/joshua'
+require 'rubygems'
+require 'bundler'
 
+Bundler.require :dev
+
+require_relative '../lib/joshua'
 require_relative '../api/application_api'
 require_relative '../api/generic_api'
 require_relative '../api/model_api'

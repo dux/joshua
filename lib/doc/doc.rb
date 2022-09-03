@@ -21,10 +21,6 @@ class Joshua
       }
     }
 
-    def tag
-      HtmlTag
-    end
-
     def misc_file name
       File.read [__dir__, '../misc/%s' % name].join('/')
     end
@@ -34,15 +30,15 @@ class Joshua
       mount_on ||= request.url.split('?').first+'/'
       mount_on.sub! %r{//$}, '/'
 
-      tag.html do |n|
-        n.head  do |n|
+      HtmlTag.html do |n|
+        n.tag(:head) do |n|
           n.title 'Joshua Tester'
           n.link({ href: "https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,800,900&display=swap",  rel:"stylesheet" })
           n.link({ rel:"stylesheet", href:"https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css" })
           n.script({ src: 'https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js' })
           n.script %[window.api_opts = { mount_on: '#{mount_on}', bearer: '#{bearer}' }]
         end
-        n.body do |n|
+        n.tag(:body) do |n|
           n.style { misc_file('doc.css') }
           n.header({ style: 'border-bottom: 1px solid rgb(228, 228, 228);'}) do |n|
             n._container do |n|
@@ -114,7 +110,7 @@ class Joshua
 
     # top side navigation icons
     def top_icons
-      tag.div({ style: 'float: right; margin-top: 18px;' }) do |n|
+      HtmlTag.div({ style: 'float: right; margin-top: 18px;' }) do |n|
         for icon in ICONS.values
           next unless icon[:url]
           n.push %[<a target="_new" href="#{icon[:url]}">#{icon icon[:image]}</a>]
@@ -124,7 +120,7 @@ class Joshua
 
     # left side navigation
     def left_nav
-      tag.div do |n|
+      HtmlTag.div do |n|
         Joshua.documented.each do |name|
           n.a({ class:'btn btn-outline-info btn-sm', style: '-font-size: 14px; margin-bottom: 10px;', href: '#%s' % name}) do |n|
             icon = name.opts.dig(:opts, :icon)
@@ -139,7 +135,7 @@ class Joshua
 
     # render doc for all documented classes
     def index
-      tag.div do |n|
+      HtmlTag.div do |n|
         for @klass in Joshua.documented
           @opts = @klass.opts
           icon = @opts.dig(:opts, :icon)
@@ -172,7 +168,7 @@ class Joshua
     def render_type name
       base = @opts[name] || return
 
-      tag.div do |n|
+      HtmlTag.div do |n|
         n.br
         n.h5 '<gray>%s methods</gray>' % name
 
@@ -186,7 +182,7 @@ class Joshua
 
     # render api method
     def render_method name:, m_name:, opts:
-      tag._box do |n|
+      HtmlTag._box do |n|
         # n.push %[<button onclick="" class="btn btn-info btn-sm request">request</button>]
         anchor = [@klass, m_name].join('-')
 
@@ -228,7 +224,7 @@ class Joshua
     end
 
     def list_errors
-      tag.div do |n|
+      HtmlTag.div do |n|
         n.push name_link :api_errors
         n.push icon ICONS[:error][:image], style: 'position: absolute; margin-left: -40px; margin-top: 1px; fill: #777;'
         n.h4 { 'Named errors' }
