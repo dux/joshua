@@ -20,10 +20,8 @@ get '/' do
   redirect '/api'
 end
 
-get '/api*' do
-  instance_exec &API_CALL
-end
-
-post '/api*' do
-  instance_exec &API_CALL
+%i(get post put patch delete).each do |m|
+  send(m, '/api*') do
+    instance_exec &API_CALL
+  end
 end

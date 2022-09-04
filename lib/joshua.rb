@@ -14,7 +14,7 @@ require_relative './joshua/response'
 require_relative './joshua/render_proxy'
 
 require_relative './doc/doc'
-require_relative './doc/special'
+require_relative './doc/postman_schema'
 
 
 

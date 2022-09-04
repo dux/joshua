@@ -2,6 +2,8 @@ class Joshua
   module Doc
     extend self
 
+    HtmlTag self
+
     ICONS ||= {
       github:  {
         url:   'https://github.com/dux/joshua',
@@ -48,7 +50,7 @@ class Joshua
             end
           end
 
-          n.img src:"https://i.imgur.com/HWoUz5k.png", style: 'width: 40px; z-index: 1; position: absolute; top: 10px; left: 50%;', onclick: "window.open('https://github.com/dux/joshua')"
+          n.img src:"https://camo.githubusercontent.com/4b5b5447d6af920f58a030740bc8e9cf52dc490a8a560492c6ad3a5c6a0ad076/68747470733a2f2f692e696d6775722e636f6d2f48576f557a356b2e706e67", style: 'width: 40px; z-index: 1; position: absolute; top: 10px; left: 50%;', onclick: "window.open('https://github.com/dux/joshua')"
 
           n.push modal_dialog
 
@@ -73,7 +75,7 @@ class Joshua
 
                   n.p '<b>API LIBRARIES</b>'
                   n.div do |n|
-                    n.push %[<a class="badge badge-light" href="https://github.com/dux/joshua/tree/master/client/ruby/client" target="capi_ruby">Ruby</a>]
+                    n.push %[<a class="badge badge-light" href="https://github.com/dux/joshua/tree/master/client/ruby" target="capi_ruby">Ruby</a>]
                     n.push %[<a class="badge badge-light" href="https://github.com/dux/joshua/tree/master/client/javascript" target="capi_js">Javascript</a>]
                     n.push %[<a class="badge badge-light" href="#">Python</a>]
                     n.push %[<a class="badge badge-light" href="#">C#</a>]
@@ -110,10 +112,10 @@ class Joshua
 
     # top side navigation icons
     def top_icons
-      HtmlTag.div({ style: 'float: right; margin-top: 18px;' }) do |n|
+      tag.div style: 'float: right; margin-top: 18px;' do
         for icon in ICONS.values
           next unless icon[:url]
-          n.push %[<a target="_new" href="#{icon[:url]}">#{icon icon[:image]}</a>]
+          a icon(icon[:image]), target: '_new', href: icon[:url]
         end
       end
     end
@@ -187,16 +189,9 @@ class Joshua
         anchor = [@klass, m_name].join('-')
 
         n.push name_link anchor
-        n.h5 do |n|
+        n.h5 style: 'margin-bottom: 20px;' do |n|
           n.push "<a href='##{anchor}'>#{m_name}</a>"
           n.push ' <gray>&nbsp; &mdash; &nbsp; %s</gray>' % opts[:desc] if opts[:desc]
-        end
-
-        n.p({style: 'margin: 20px 0 25px 0;'}) do |n|
-          path = @klass.api_path
-          path += '/:id' if name == :member
-          path += "/#{m_name}"
-          n.push %[<button href="#{path}" class="btn btn-outline-info btn-sm" onclick="ModalForm.render(api_opts.mount_on+this.innerHTML, #{(opts[:params] || {}).to_json.gsub('"', '&quot;')})">#{path}</button>]
         end
 
         if opts[:detail]
@@ -219,6 +214,13 @@ class Joshua
               end
             end
           end
+        end
+
+        n.p style: 'margin: 30px 0 10px 0;' do |n|
+          path = @klass.api_path
+          path += '/:id' if name == :member
+          path += "/#{m_name}"
+          n.push %[<button href="#{path}" class="btn btn-outline-info btn-sm" onclick="ModalForm.render(api_opts.mount_on+this.innerHTML, #{(opts[:params] || {}).to_json.gsub('"', '&quot;')})">#{path}</button>]
         end
       end
     end

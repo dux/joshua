@@ -8,6 +8,8 @@ class CompanyApi < ModelApi
       country_id  Integer
       is_active   false
     end
+    allow :put
+    desc 'List of available companies'
     def index
       message 'done'
     end

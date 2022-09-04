@@ -114,7 +114,7 @@ class Joshua
       api_class = if klass = opts.delete(:class)
         # /api/_/foo
         if klass == '_'
-          klass = Joshua::DocSpecial.new(opts)
+          klass = Joshua::PostmanSchema.new(opts)
 
           if klass.respond_to?(action.first)
             return klass.send action.first.to_sym

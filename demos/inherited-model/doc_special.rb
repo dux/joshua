@@ -3,7 +3,7 @@
 # this works for ActiveRecord and Sequel models
 
 class Joshua
-  class DocSpecial
+  class PostmanSchema
     def formdata_model opts
       model = opts.key.to_s.classify.constantize
       keys  = model.respond_to?(:column_names) ? model.column_names.map(&:to_sym) : model.columns

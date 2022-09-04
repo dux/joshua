@@ -1,7 +1,7 @@
 # reponse from /api/_/foo
 
 class Joshua
-  class DocSpecial
+  class PostmanSchema
     def initialize api
       @api = api
     end
@@ -17,10 +17,9 @@ class Joshua
         item: []
       }
 
-      for table, data in raw
-        raw_data = raw[table.to_s]
+      for api_name, raw_data in raw
         hash = {}
-        hash[:name] = table
+        hash[:name] = api_name
         hash[:item] = []
 
         for type in [:collection, :member]
@@ -30,14 +29,17 @@ class Joshua
             items = []
 
             for key, value in raw_data[type]
-              items.push postman_add_method(type, table, key, value)
+              items.push postman_add_method(
+                type: type,
+                object_name: api_name,
+                name: key,
+                item: value
+              )
             end
 
             hash[:item].push *items
-            # hash[:item].push({
-            #   name: type,
-            #   item: items
-            # })
+            # to have it grouped by collection or member methods
+            # hash[:item].push(name: type, item: items)
           end
         end
 
@@ -69,7 +71,7 @@ class Joshua
 
     private
 
-    def postman_add_method type, table, name, item
+    def postman_add_method type:, object_name:, name:, item:
       path = []
 
       base = request.url.split('/_/').first
@@ -78,24 +80,24 @@ class Joshua
       path.push base.pop
       base = base.join('/')
 
-      path.push table
+      path.push object_name
       path.push ':id' if type == :member
       path.push name
 
       name = '%s*' % name if type == :collection
 
-      out = {
-        name: name,
-        request: {
-          method: 'POST',
-          header: [],
-          url: {
-            raw:      ([base] + path).join('/'),
-            protocol: base.split(':').first,
-            host:     request.host.split('.'),
-            port:     request.port,
-            path:     path
-          },
+      out = {}
+      out[:name] = name
+      out[:description] = item[:desc] if item[:desc]
+      out[:request] = {
+        method: item[:allow] || 'POST',
+        header: [],
+        url: {
+          raw:      ([base] + path).join('/'),
+          protocol: base.split(':').first,
+          host:     request.host.split('.'),
+          port:     request.port,
+          path:     path
         }
       }
 
@@ -106,9 +108,8 @@ class Joshua
 
         # if value[:type] == 'model' and key == 'user' you can define "formdata_model"
         # that returns list of fields for defined model
-        formdata_value =
-        if respond_to?(formdata_custom)
-          opts = { key: key, value: value, name: name, type: type, group: table }
+        formdata_value = if respond_to?(formdata_custom)
+          opts = { key: key, value: value, name: name, type: type, group: object_name }
           [send(formdata_custom, opts.to_hwia)].flatten
         else
           { key: key, description: value[:type] }
