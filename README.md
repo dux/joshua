@@ -325,6 +325,7 @@ end
 
 # Example api call with response
 UserApi.render :login, params: { user: 'foo', pass: 'bar' }
+UserApi.render.login user: 'foo', pass: 'bar' }
 # {
 #   success: true,
 #   message: 'login ok',
