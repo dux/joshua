@@ -16,6 +16,12 @@ class UsersApi < ModelApi
         'Email with login link sent'
       end
     end
+
+    define :list do
+      prod do
+
+      end
+    end
   end
 
   member do

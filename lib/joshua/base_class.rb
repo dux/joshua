@@ -4,7 +4,9 @@ class Joshua
 
   class << self
     # perform auto_mount from a rake call
-    def call env
+    def call env = nil
+      return render unless env
+
       request = Rack::Request.new env
 
       if request.path == '/favicon.ico'
@@ -141,6 +143,11 @@ class Joshua
     rescue => error
       error_print error if opts[:development]
       Response.auto_format error
+    end
+
+    def render_data action, opts = {}
+      response = render action, params: opts
+      response && (response[:data] || [])
     end
 
     # rescue_from CustomError do ...
@@ -413,7 +420,7 @@ class Joshua
         if v.is_a?(Hash)
           make_hash_html_safe v
         elsif v.class == String
-          hash[k] = v.gsub('<', '&lt;')
+          hash[k] = v.gsub('<', '#LT;')
         end
       end
     end
