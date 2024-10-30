@@ -39,6 +39,8 @@ class Joshua
       else
         @message ||= value
       end
+
+      nil
     end
 
     # api meta response, any data is allowed
