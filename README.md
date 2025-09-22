@@ -17,21 +17,32 @@ Joshua is opinionated [API](https://learn.g2.com/api) implementation for [Ruby](
 
 ### Installation
 
-to install
+#### Requirements
 
-`gem install joshua`
+* Ruby 2.5 or higher (tested with Ruby 2.7, 3.0, 3.1, 3.2)
+* Bundler (for dependency management)
 
-or in Gemfile
+#### Install via RubyGems
 
-`gem 'joshua'`
+```bash
+gem install joshua
+```
 
-or in Gemfile from GitHub
+#### Add to Gemfile
 
-`gem 'joshua', git: 'git@github.com:dux/joshua.git'`
+```ruby
+# From RubyGems
+gem 'joshua'
 
-and to use
+# From GitHub (latest development version)
+gem 'joshua', git: 'git@github.com:dux/joshua.git'
+```
 
-`require 'joshua'`
+#### Basic usage
+
+```ruby
+require 'joshua'
+```
 
 ### Components
 
@@ -1158,6 +1169,493 @@ After checking out the repo, run bundle install to install dependencies. Then, r
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/dux/joshua. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the Contributor Covenant code of conduct.
+
+## Advanced Topics
+
+### Authentication and Authorization Patterns
+
+Joshua provides flexible authentication through the `@api.bearer` token and before filters:
+
+#### JWT Token Authentication
+
+```ruby
+class ApplicationApi < Joshua
+  before do
+    if @api.bearer
+      begin
+        payload = JWT.decode(@api.bearer, Rails.application.secret_key_base)[0]
+        @current_user = User.find(payload['user_id'])
+      rescue JWT::DecodeError => e
+        error 401, 'Invalid token: %s' % e.message
+      end
+    end
+  end
+end
+```
+
+#### API Key Authentication
+
+```ruby
+class ApplicationApi < Joshua
+  before do
+    api_key = @api.request.env['HTTP_X_API_KEY']
+    @api_client = ApiClient.find_by(key: api_key)
+    error 401, 'Invalid API key' unless @api_client
+  end
+end
+```
+
+#### Role-Based Access Control
+
+```ruby
+class AdminApi < ApplicationApi
+  before do
+    error 403, 'Admin access required' unless @current_user&.admin?
+  end
+  
+  collection do
+    def users
+      User.all.map(&:api_export)
+    end
+  end
+end
+```
+
+### Error Handling Best Practices
+
+#### Custom Error Classes
+
+```ruby
+class ApplicationApi < Joshua
+  class ValidationError < StandardError; end
+  class NotFoundError < StandardError; end
+  class RateLimitError < StandardError; end
+  
+  rescue_from ValidationError do |e|
+    error 422, 'Validation failed: %s' % e.message
+  end
+  
+  rescue_from NotFoundError do |e|
+    error 404, e.message
+  end
+  
+  rescue_from RateLimitError do |e|
+    response.header['X-RateLimit-Reset'] = e.reset_at.to_i.to_s
+    error 429, 'Rate limit exceeded. Try again in %d seconds' % e.retry_after
+  end
+end
+```
+
+#### Structured Error Responses
+
+```ruby
+class UsersApi < ApplicationApi
+  collection do
+    params do
+      email :email
+      password String, min: 8
+      age Integer, min: 18, max: 120
+    end
+    def signup
+      user = User.new(params.to_h)
+      
+      if user.save
+        user.token
+      else
+        # Returns detailed field errors
+        error 422, 'Validation failed', details: user.errors.to_hash
+      end
+    end
+  end
+end
+```
+
+### Database Integration Examples
+
+#### ActiveRecord Integration
+
+```ruby
+class ModelApi < ApplicationApi
+  before do
+    @model_class = self.class.to_s.sub(/Api$/, '').constantize
+    @model = @api.id ? @model_class.find(@api.id) : @model_class.new
+  rescue ActiveRecord::RecordNotFound
+    error 404, '%s not found' % @model_class.name
+  end
+  
+  member do
+    def update
+      if @model.update(params.to_h)
+        message 'Updated successfully'
+        @model.api_export
+      else
+        error 422, 'Update failed', details: @model.errors
+      end
+    end
+  end
+end
+```
+
+#### Sequel Integration
+
+```ruby
+class SequelModelApi < ApplicationApi
+  before do
+    @model = DB[:users].where(id: @api.id).first
+    error 404, 'User not found' unless @model
+  end
+  
+  member do
+    def show
+      @model
+    end
+  end
+end
+```
+
+### API Versioning Strategies
+
+#### Header-Based Versioning
+
+```ruby
+class ApplicationApi < Joshua
+  before do
+    @api_version = @api.request.env['HTTP_API_VERSION'] || 'v1'
+  end
+end
+
+module V1
+  class UsersApi < ApplicationApi
+    # V1 implementation
+  end
+end
+
+module V2
+  class UsersApi < ApplicationApi
+    # V2 implementation with breaking changes
+  end
+end
+```
+
+#### Path-Based Versioning
+
+```ruby
+# In your rack app
+map '/api/v1' do
+  run V1::ApplicationApi
+end
+
+map '/api/v2' do
+  run V2::ApplicationApi
+end
+```
+
+### File Upload Handling
+
+```ruby
+class FilesApi < ApplicationApi
+  collection do
+    desc 'Upload a file'
+    params do
+      file Hash # Rack::Multipart::UploadedFile
+      description? String
+    end
+    def upload
+      uploaded_file = params.file
+      
+      # Validate file
+      error 'No file provided' unless uploaded_file
+      error 'File too large' if uploaded_file[:tempfile].size > 10.megabytes
+      
+      # Save file
+      filename = SecureRandom.hex + File.extname(uploaded_file[:filename])
+      path = Rails.root.join('uploads', filename)
+      
+      File.open(path, 'wb') do |f|
+        f.write(uploaded_file[:tempfile].read)
+      end
+      
+      { url: "/uploads/#{filename}", size: uploaded_file[:tempfile].size }
+    end
+  end
+end
+```
+
+### CORS Configuration
+
+```ruby
+class ApplicationApi < Joshua
+  after do
+    # Allow CORS for all origins (customize as needed)
+    response.header['Access-Control-Allow-Origin'] = '*'
+    response.header['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.header['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+  end
+  
+  # Handle preflight requests
+  collection do
+    allow :options
+    def options
+      response.status = 204
+      nil
+    end
+  end
+end
+```
+
+### Rate Limiting
+
+```ruby
+class ApplicationApi < Joshua
+  before do
+    # Simple Redis-based rate limiting
+    if @current_user
+      key = "rate_limit:#{@current_user.id}:#{Time.now.to_i / 60}"
+      count = Redis.current.incr(key)
+      Redis.current.expire(key, 60) if count == 1
+      
+      if count > 100 # 100 requests per minute
+        error 429, 'Rate limit exceeded. Please try again later.'
+      end
+    end
+  end
+end
+```
+
+## Testing Your APIs
+
+### RSpec Testing
+
+```ruby
+# spec/api/users_api_spec.rb
+require 'spec_helper'
+
+RSpec.describe UsersApi do
+  let(:user) { User.create!(email: 'test@example.com', token: 'test-token') }
+  
+  describe 'POST /users/login' do
+    it 'returns token for valid credentials' do
+      result = UsersApi.render.login(user: 'foo', pass: 'bar')
+      
+      expect(result[:success]).to be true
+      expect(result[:data]).to match(/^token-/)
+    end
+    
+    it 'returns error for invalid credentials' do
+      result = UsersApi.render.login(user: 'wrong', pass: 'wrong')
+      
+      expect(result[:success]).to be false
+      expect(result[:error][:messages]).to include('Wrong user or pass')
+    end
+  end
+  
+  describe 'GET /users/:id/show' do
+    it 'returns user data when authorized' do
+      result = UsersApi.render.show(user.id, bearer: user.token)
+      
+      expect(result[:success]).to be true
+      expect(result[:data][:email]).to eq(user.email)
+    end
+    
+    it 'returns error when unauthorized' do
+      result = UsersApi.render.show(user.id, bearer: 'invalid-token')
+      
+      expect(result[:success]).to be false
+      expect(result[:error][:code]).to eq(401)
+    end
+  end
+end
+```
+
+### Integration Testing
+
+```ruby
+# spec/integration/api_spec.rb
+require 'rack/test'
+
+describe 'API Integration' do
+  include Rack::Test::Methods
+  
+  def app
+    ApplicationApi
+  end
+  
+  it 'handles JSON requests' do
+    post '/api/users/login', 
+         { user: 'foo', pass: 'bar' }.to_json,
+         { 'CONTENT_TYPE' => 'application/json' }
+    
+    expect(last_response.status).to eq(200)
+    json = JSON.parse(last_response.body)
+    expect(json['success']).to be true
+  end
+end
+```
+
+## Deployment and Production
+
+### Performance Optimization
+
+```ruby
+# config.ru for production
+require 'bundler/setup'
+require_relative 'app'
+
+# Enable response compression
+use Rack::Deflater
+
+# Add request ID for tracking
+use Rack::RequestId
+
+# Add timeout handling
+use Rack::Timeout, service_timeout: 30
+
+# Mount the API
+run ApplicationApi
+```
+
+### Production Configuration
+
+```ruby
+class ApplicationApi < Joshua
+  configure :production do
+    # Disable detailed error messages
+    rescue_from StandardError do |e|
+      logger.error "API Error: #{e.message}\n#{e.backtrace.join("\n")}"
+      error 500, 'Internal server error'
+    end
+    
+    # Add security headers
+    after do
+      response.header['X-Content-Type-Options'] = 'nosniff'
+      response.header['X-Frame-Options'] = 'DENY'
+      response.header['X-XSS-Protection'] = '1; mode=block'
+    end
+  end
+end
+```
+
+### Docker Deployment
+
+```dockerfile
+# Dockerfile
+FROM ruby:3.2-slim
+
+RUN apt-get update -qq && apt-get install -y build-essential
+
+WORKDIR /app
+
+COPY Gemfile Gemfile.lock ./
+RUN bundle install --deployment --without development test
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
+```
+
+### Monitoring and Logging
+
+```ruby
+class ApplicationApi < Joshua
+  before do
+    @request_id = SecureRandom.uuid
+    logger.info "[#{@request_id}] #{@api.request.request_method} #{@api.request.path}"
+    @start_time = Time.now
+  end
+  
+  after do
+    duration = ((Time.now - @start_time) * 1000).round(2)
+    status = response.error? ? 'ERROR' : 'SUCCESS'
+    logger.info "[#{@request_id}] #{status} in #{duration}ms"
+  end
+end
+```
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### Issue: "undefined method 'render' for UserApi:Class"
+
+**Solution:** Make sure you're inheriting from `Joshua` or a class that inherits from it:
+
+```ruby
+class UserApi < Joshua  # or < ApplicationApi
+  # ...
+end
+```
+
+#### Issue: "No route matches"
+
+**Solution:** Check that your method is defined within `collection` or `member` blocks:
+
+```ruby
+class UserApi < Joshua
+  collection do  # for routes without ID
+    def login
+    end
+  end
+  
+  member do      # for routes with ID
+    def show
+    end
+  end
+end
+```
+
+#### Issue: "Bearer token not working"
+
+**Solution:** Ensure you're passing the token correctly:
+
+```ruby
+# In HTTP headers
+Authorization: Bearer your-token-here
+
+# Or in the render call
+UserApi.render.show(123, bearer: 'your-token-here')
+```
+
+#### Issue: "Params validation not working"
+
+**Solution:** Ensure params are defined before the method:
+
+```ruby
+collection do
+  params do      # Must come before the method
+    email :email
+  end
+  def login      # Method definition after params
+    # ...
+  end
+end
+```
+
+#### Issue: "Can't see API documentation"
+
+**Solution:** Add `documented` to your API class:
+
+```ruby
+class UserApi < Joshua
+  documented     # Enable documentation
+  # ...
+end
+```
+
+#### Issue: "JSON RPC mode not working"
+
+**Solution:** Ensure your request format is correct:
+
+```bash
+curl -X POST http://localhost:3000/api \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "unique-request-id",
+    "action": ["users", "123", "show"],
+    "params": {"include": "profile"}
+  }'
+```
 
 ## License
 
