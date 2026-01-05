@@ -179,7 +179,7 @@ class Joshua
         response.error err, args
       end
     else
-      rr text
+      rr text if respond_to?(:rr)
       response.error text, args
     end
 
@@ -192,7 +192,7 @@ class Joshua
 
   def super! name=nil
     type   = @api.id ? :member : :collection
-    name ||= caller[0].split('`')[1].sub("'", '')
+    name ||= caller[0].split("'").last.sub("'", '').split('#').last
     name   = "_api_#{type}_#{name}"
     self.class.superclass.instance_method(name).bind(self).call
   end

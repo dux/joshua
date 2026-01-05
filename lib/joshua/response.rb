@@ -86,8 +86,8 @@ class Joshua
       @errors[:details][name] = desc
     end
 
-    def data value=:_undefind
-      if value == :_undefind
+    def data value=:_undefined
+      if value == :_undefined
         @data
       else
         @data = value

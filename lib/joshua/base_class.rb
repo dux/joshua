@@ -72,13 +72,13 @@ class Joshua
           #   "params": {}         # methos params
           # }
           opts[:params] = body['params'] || {}
-          opts[:bearer] = body['token'] if body['token']
+          opts[:bearer] ||= body['token'] if body['token']
           opts[:class]  = body['class']
 
           body['action']
         else
           opts[:params] = request.params || {}
-          opts[:bearer] = opts[:params][:api_token] if opts[:params][:api_token]
+          opts[:bearer] ||= opts[:params][:api_token] if opts[:params][:api_token]
 
           mount_on = mount_on+'/' unless mount_on.end_with?('/')
           path     = request.url.split(mount_on, 2).last.split('?').first.to_s
@@ -90,7 +90,8 @@ class Joshua
           parts
         end
 
-        opts[:bearer] ||= request.env['HTTP_AUTHORIZATION'].to_s.split('Bearer ')[1]
+        bearer_token = extract_bearer_token(request.env['HTTP_AUTHORIZATION'])
+        opts[:bearer] ||= bearer_token if bearer_token
 
         api_response = render action, **opts
 
@@ -323,7 +324,7 @@ class Joshua
 
     # define response content type (defaults to JSON)
     def content_type name
-      if name.is_class == Symbol
+      if name.class == Symbol
         name = case name
         when :json
           'application/json'
@@ -450,6 +451,13 @@ class Joshua
       end
 
       pointer[name] = value
+    end
+
+    # extract bearer token from Authorization header
+    def extract_bearer_token auth_header
+      return nil unless auth_header
+
+      auth_header.to_s.split('Bearer ')[1]
     end
   end
 end

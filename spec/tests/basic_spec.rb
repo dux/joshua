@@ -51,4 +51,26 @@ describe 'dev' do
   it 'defines allowed method' do
     expect(UserApi.opts.dig(:collection, :call_me_in_child, :allow)).to eq 'DELETE'
   end
+
+  it 'extracts bearer token from Authorization header' do
+    token = Joshua.send(:extract_bearer_token, 'Bearer my-token')
+    expect(token).to eq('my-token')
+  end
+
+  it 'returns nil for invalid bearer token header' do
+    token = Joshua.send(:extract_bearer_token, 'Basic invalid')
+    expect(token).to be_nil
+  end
+
+  it 'returns nil for nil header' do
+    token = Joshua.send(:extract_bearer_token, nil)
+    expect(token).to be_nil
+  end
+
+  it 'accepts Symbol in content_type' do
+    class TestContentTypeApi < Joshua
+      content_type :json
+    end
+    expect(TestContentTypeApi).not_to be_nil
+  end
 end

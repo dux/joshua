@@ -45,7 +45,7 @@ class UsersApi < ModelApi
       desc 'Undelete user by enableing it'
       proc do
         @user.update is_deleted: false, name: params.name
-        messsage 'You undeleted a user'
+        message 'You undeleted a user'
       end
     end
 
@@ -53,7 +53,7 @@ class UsersApi < ModelApi
     desc 'Generate new user access token'
     def re_tokenize
       @user.update token: Crypt.random(40)
-      messsage 'Token updated'
+      message 'Token updated'
     end
   end
 end

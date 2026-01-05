@@ -6,12 +6,12 @@ Joshua is opinionated [API](https://learn.g2.com/api) implementation for [Ruby](
 
 ### Features
 
-* Can work in REST or JSON RPC mode.
+* Can work in REST or JSON RPC mode
 * Automatic routing + can be mounted as a Rack app, without framework, for unmatched speed and low memory usage
 * Automatic documentation builder & [Postman](https://www.postman.com/) / [Insomnia](https://insomnia.rest/) import link
-* Nearly nothing to learn, pure Ruby clases
+* Nearly nothing to learn, pure Ruby classes
 * Consistent and predictable request and response flow
-* Errors and messages are [localized](https://github.com/dux/joshua/blob/master/lib/joshua/params/types_errors.rb)
+* Errors and messages are localized
 
 <br />
 
@@ -52,37 +52,35 @@ require 'joshua'
   * [manual mount](#manual_mount)
   * [automatic routing](#routing)
 * API Methods
-  * [collections or members](#before)
-  * [helper methods](#helper_methods)
-  * [description and detail](#desc_and_detail)
+  * [collections or members](#before-and-after-filters)
+  * [helper methods](#helper-methods)
   * [annotations + custom annotations](#annotations)
   * [params + custom params](#params)
     * [models](#models)
 * [Response](#response)
-  * [model exporters](#exporters)
   * [errors + custom errors](#errors)
   * success
     * meta info
     * [message](#message)
 * Class methods
-  * [rescue from](#rescue_from)
-  * [before and after](#before)
-  * [extending and including](#extending)
-* [Doc builder](#doc_builder)
+  * [rescue from](#rescue-from)
+  * [before and after](#before-and-after-filters)
+  * [extending and including](#extending-and-including)
+* [Doc builder](#automatic-documentation-builder)
 
 
 ### Speed
 
 Joshua **directly** maps requests to method calls, without routing and it also can work mounted directly on the rack interface, as demonstrated [here](https://github.com/dux/joshua/blob/master/demos/simple/config.ru).
 
-By using plain ruby classes, direct mapping without routing and provideing direct `rack` access if needed, it is hard to beat Egoist in pure speed.
+By using plain ruby classes, direct mapping without routing and providing direct `rack` access if needed, it is hard to beat Joshua in pure speed.
 
 ### Look and feel
 
 * `member (/foo/123/bar)` and `collection (/foo/bar)` exist in separate namespace. You can have `member` and `collection` `update` methods if you need to.
 * `rescue_from`, `before` and `after` filters are supported.
-* you can inherit methods from parent class just as in plain ruby. Define generic `show`, `create`, `update` and `delete` methods and inherit them in parent classes.
-* many more stuff
+* You can inherit methods from parent class just as in plain ruby. Define generic `show`, `create`, `update` and `delete` methods and inherit them in parent classes.
+* Many more features
 
 ```ruby
 class ModelApi < Joshua
@@ -164,26 +162,26 @@ Featuring **nearly all** you have to know to start building your APIs using Josh
 ```ruby
 # in ApplicationApi we will define rules that will reflect all other API classes
 class ApplicationAPI < Joshua
-  # inside ot the methods you can say `error :foo` and text error will raise
+  # inside of methods you can say `error :foo` and text error will raise
   rescue_from :foo, 'Baz is angry'
 
-  # capture Policy::Error and add custom formating
+  # capture Policy::Error and add custom formatting
   rescue_from Policy::Error do |error|
     error 403, 'Policy error: %s' % error.message
   end
 
-  # define method annotation that will be run before the method executes
+  # define method annotation that will be run before method executes
   annotation :anonymous do
     @anonymous_allowed = true
   end
 
-  # define custom paramter called label
+  # define custom parameter called label
   # that will allow only characters, with max length of 15
   params :label do |value, opts|
     error 'Label is not in the right format' unless value =~ /^\w{1,15}$/
   end
 
-  # before block wil be executed before any method call
+  # before block will be executed before any method call
   before do
     # if token provided load user, raise error otherwise
     if @api.bearer
@@ -193,12 +191,12 @@ class ApplicationAPI < Joshua
       error 'Invalid API token' unless @current_user
     end
 
-    # raise error unless @user defined and we dot allow anonymous access
-    if !@user && !@anonymous_allowed
-      error 'Anonymous access not allowed,please register'
+    # raise error unless @user defined and we do not allow anonymous access
+    if !@current_user && !@anonymous_allowed
+      error 'Anonymous access not allowed, please register'
     end
 
-    # we will use this time to calcualte method execution speed
+    # we will use this time to calculate method execution speed
     @_time = Time.now
   end
 
@@ -221,7 +219,7 @@ end
 
 # we will create generic ModelAPI, that all models will inherit from
 class ModelAPI < ApplicationAPI
-  # eexecute before all methods that inherit from ModelAPI
+  # execute before all methods that inherit from ModelAPI
   before do
     # load generic object based on current class name
     # UsersApi -> User
@@ -244,7 +242,7 @@ class ModelAPI < ApplicationAPI
     error 404, 'Object %s[%s] is not found' % [base, @api.id] unless @model
   end
 
-  # execute after method exection, only in member methods
+  # execute after method execution, only in member methods
   after do
     # add object path to response
     response[:path] = @model.path
@@ -276,8 +274,8 @@ class UsersApi < ModelAPI
 
     # params can be defined as a block as well
     params do
-      # method name in a block is paramter name, and it is required
-      # String is defult type, you can skip writeing it
+      # method name in a block is parameter name, and it is required
+      # String is default type, you can skip writing it
       user String
       # if you add question mark, it is not required
       pass? :string
@@ -314,20 +312,20 @@ class UsersApi < ModelAPI
       @user.api_export
     end
 
-    # /api/users/:id/show
+    # /api/users/:id/delete
     def delete
       @user.destroy
       message 'You deleted yourself'
     end
 
     # you can use define to create an api method, to have all nested under readable block
-    # just be sure that you return a proc or labmda as a last argument
+    # just be sure that you return a proc or lambda as a last argument
     # /api/users/:id/re_tokenize
     define :re_tokenize do
       desc 'Generate new user access token'
       proc do
         @user.update token: Crypt.random(40)
-        messsage 'New token generated'
+        message 'New token generated'
       end
     end
   end
@@ -336,7 +334,7 @@ end
 
 # Example api call with response
 UserApi.render :login, params: { user: 'foo', pass: 'bar' }
-UserApi.render.login user: 'foo', pass: 'bar' }
+UserApi.render.login(user: 'foo', pass: 'bar')
 # {
 #   success: true,
 #   message: 'login ok',
@@ -360,12 +358,12 @@ UserApi.render :login, params: { user: 'aaa', pass: 'bbb' }
 <a name="rest"></a>
 ### Can work in REST or JSON RPC mode
 
-By default API works on POST for all methods and raises error for any other reqest type. You can modify the behaviour by enabling specific methods using for example `allow :get` to allow `HTTP GET`, shortcut `gettable` or `force :get` to only allow `HTTP GET`.
+By default API works on POST for all methods and raises error for any other request type. You can modify the behavior by enabling specific methods using for example `allow :get` to allow `HTTP GET`.
 
 #### Example requests
 
 ```bash
-# this POST request will in production by default
+# this POST request will work in production by default
 curl -d 'foo=bar' http://localhost:3000/api/orgs/1/show
 
 # or as JSON RPC style POST
@@ -382,11 +380,11 @@ but you can respond with anything you like
   # respond with csv data
   # /api/user/1/send_csv
   def send_csv
-    response :csv do
+    response do
       @user.generate_csv_data
     end
   end
-  # Content-type: application/csv
+  # Content-type: text/plain
   # name, email, ...
 
   # response with CSV in response data block
@@ -406,14 +404,14 @@ but you can respond with anything you like
 <a name="routing"></a>
 ### Automatic routing
 
-Requests are directly maped to ruby methods
+Requests are directly mapped to ruby methods
 
 Routes can have max 3 elements.
 
-* **2 elements, "collection" routes without rosource indentifier**
+* **2 elements, "collection" routes without resource identifier**
   <br>
   class / collection method
-* ***3 elements***
+* **3 elements**
   <br>
   class / resource-id / member method
 
@@ -448,18 +446,18 @@ module Parent
 end
 ```
 
-It is possible to have custom routes as `/api/:company/:class/:id/:method` etc but you have to configure that manualy. This is what you get "out of the box" by `auto_mount`
+It is possible to have custom routes as `/api/:company/:class/:id/:method` etc but you have to configure that manually. This is what you get "out of the box" by `auto_mount`
 
 This is **ALL** you have to know about routing.
 
 <hr />
 
-<a name="doc_builder"></a>
+<a name="automatic-documentation-builder"></a>
 ### Automatic documentation builder
 
-Beautiful documentation is automaticly build for you, with ready libraries for all popular languages.
+Beautiful documentation is automatically built for you, with ready libraries for all popular languages.
 
-To enable class documenttion add `documented`
+To enable class documentation add `documented`
 
 ```ruby
 class UserApi < Joshua
@@ -485,7 +483,7 @@ Assuming that `Joshua` mount point is `/api`
 Routing is automatic and response is generated by [Joshua::Response](https://github.com/dux/joshua/blob/master/lib/joshua/response.rb) class.
 
 ```ruby
-# successuful request
+# successful request
 {
   success: true,
   id: 'unique-response-id',
@@ -514,12 +512,12 @@ Routing is automatic and response is generated by [Joshua::Response](https://git
 
 ## Class methods
 
-Methods avaiable on class level.
+Methods available on class level.
 
-<a name="rescue_from"></a>
+<a name="rescue-from"></a>
 ### Rescue from
 
-Similar to Rails `rescue_from`. You can call manualy with `error :foo` or `error 404`, capture named errors and format response as you fit.
+Similar to Rails `rescue_from`. You can call manually with `error :foo` or `error 404`, capture named errors and format response as you fit.
 
 ```ruby
 class UsersApi < Joshua
@@ -532,7 +530,7 @@ class UsersApi < Joshua
     end
   end
 
-  # capture Policy::Error and add custom formating
+  # capture Policy::Error and add custom formatting
   rescue_from Policy::Error do |error|
     error 403, 'Policy error: %s' % error.message
   end
@@ -558,31 +556,31 @@ Case: If we add `let_guests_in!` annotation we enable guests to use the method.
 ```ruby
 # define method annotation that will be run before the method executes
 annotation :let_guests_in! do
-  @guets_allowed = true
+  @guests_allowed = true
 end
 
 before do
   # before filter picks up annotation and can be used in logic
-  error 'Guest access not allowed' unless @user || @guets_allowed
+  error 'Guest access not allowed' unless @current_user || @guests_allowed
 end
 
 collection do
   let_guests_in! # annotation used
   def login
-    error 'This will never trigger' unless @user || @guets_allowed
+    error 'This will never trigger' unless @current_user || @guests_allowed
     # ...
   end
 end
 ```
 
-#### Example: working hcaptcha.com / recaptha
+#### Example: working hcaptcha.com / recaptcha
 
-Case: If we add `hcaptcha` annotation we enusre that `https://hcaptcha.com` check is passed
+Case: If we add `hcaptcha` annotation we ensure that `https://hcaptcha.com` check is passed
 
 ```ruby
 annotation :hcaptcha! do
   captcha = params['h-captcha-response'] || error('Captcha not selected')
-  data    = JSON.parse `curl -d "response=#{captcha}&secret=#{Lux.secrets.hcaptcha.secret}" -X POST https://hcaptcha.com/siteverify`
+  data    = JSON.parse `curl -d "response=#{captcha}&secret=#{ENV['HCAPTCHA_SECRET']}" -X POST https://hcaptcha.com/siteverify`
 
   unless data['success']
     error 'HCaptcha error: %s' % data['error-codes'].join(', ')
@@ -608,8 +606,8 @@ end
 <a name="params"></a>
 ### Params
 
-* you can define params directly on the params metod or you can pass as a block
-* every param can have `optional: true` or end name with `?`
+* You can define params directly on the params method or you can pass as a block
+* Every param can have `optional: true` or end name with `?`
 
   ```ruby
   # inline
@@ -623,12 +621,12 @@ end
   # as a block
   params do
     user_email? :email                  # type: :email, required: false
+    user_email  :email, required: true       # type: :email, required: true
     user_email  :email, req: true       # type: :email, required: true
-    user_email  :email, required: true  # type: :email, required: true
   end
   ```
 
-* every param can have `default:` value that will be applies if value is `blank?`
+* Every param can have `default:` value that will be applied if value is `blank?`
 * min and max are available for Integer, Float
 
   ```ruby
@@ -660,10 +658,10 @@ end
   end
   ```
 
-* many supported types and you can define your own types
+* Many supported types and you can define your own types
   * native - `:integer`, `:float`, `:date`, `:datetime`, `:boolean`, `:hash`
   * custom - `:email`, `:url`, `:oib`, `:point` (geo point)
-  * you can as well <a href="#params">define your custom type</a>
+  * you can as well define your custom type
 
 #### Define custom params type
 
@@ -671,21 +669,21 @@ You can define custom param type
 
 * first argument is param type
 * second argument is param options
-* you must return value, value coarse is possible (as memonstrated below)
+* you must return value, value coercion is possible (as demonstrated below)
 
 ```ruby
-# define custom paramter called label
+# define custom parameter called label
 # that will allow only characters, with max length of 15
 params :locale do |value, opts|
   # allow 'en' or 'en-gb'
-  error 'Length should be 2 or max 5 chars' unless [2, 5].include?(value.
+  error 'Length should be 2 or max 5 chars' unless [2, 5].include?(value.length)
   error 'Local is not in the right format' unless value =~ /^[\w\-]+$/
   value.downcase
 end
 
 member do
   params do
-    projet_locale :locale
+    project_locale :locale
   end
   def project
     # ...
@@ -693,19 +691,19 @@ member do
 end
 ```
 
-<a name="before"></a>
+<a name="before-and-after-filters"></a>
 ### Before and after & members and collections
 
 * `before` and `after` filters
-  * if defined in root,  fill be triggerd on every API method call.
-  * if nested under `member` and `collection` will be run only in `member` and `collection` api methods.
+  * If defined in root, will be triggered on every API method call.
+  * If nested under `member` and `collection` will be run only in `member` and `collection` api methods.
 * `collection` api methods
-  * can be written as `collection do ...` or `collections do ...`
-  * will run methods when resource ID is NOT provided
+  * Can be written as `collection do ...` or `collections do ...`
+  * Will run methods when resource ID is NOT provided
     * example route `/api/users/login`
 * `member` api methods
-  * can be written as `member do ...` or `members do ...`
-  * will run methods when resource ID is provided
+  * Can be written as `member do ...` or `members do ...`
+  * Will run methods when resource ID is provided
     * example route `/api/users/123/show` or `/api/users/abc-def/show`
     * accessible via `@api.id (type: String)`
 
@@ -713,7 +711,7 @@ Example
 
 ```ruby
 class TestApi < Joshua
-  # before block wil be executed before any method call
+  # before block will be executed before any method call
   before do
     @num = 1
   end
@@ -726,12 +724,12 @@ class TestApi < Joshua
   collection do
     # /api/user/foo
     def foo
-      @num + foo # 1 + 3 = 4
+      @num + 3 # 1 + 3 = 4
     end
   end
 
   member do
-    # if defined in `member` of `collection`
+    # if defined in `member` or `collection`
     # it will be called ONLY in respected groups.
     before do
       @num += 2
@@ -744,7 +742,7 @@ class TestApi < Joshua
 
     # /api/user/:id/foo
     def foo
-      @num + foo # (1 + 2) + 3 = 6
+      @num + 3 # (1 + 2) + 3 = 6
     end
   end
 
@@ -758,17 +756,17 @@ end
 
 ### after_auto_mount
 
-If you want to modify api request after mount. first parameter is class+method path and second is all options hash.
+If you want to modify api request after mount. First parameter is class+method path and second is all options hash.
 
 ```ruby
 # /api/cisco/contracts/list
-# covert to
+# convert to
 # /api/contracts/list?org_id=123
 
 after_auto_mount do |nav, opts|
   if org = Org.find_by code: nav.first
     nav.shift
-    opts[:params][:org_id] = @org.id
+    opts[:params][:org_id] = org.id
   end
 end
 ```
@@ -782,10 +780,10 @@ You can use that information not to check for bearer auth token in `before` filt
 <a name="models"></a>
 ### Models
 
-API models can be defined and paramterers can be checked against the models
+API models can be defined and parameters can be checked against the models
 
 ```ruby
-class ApplicaitonApi
+class ApplicationApi
   model :company do
     id      Integer
     name    String
@@ -800,7 +798,7 @@ class ApplicaitonApi
 
     # If proc is defined and returned, filtering will be applied
     #   before the data is forwarded to api method
-    # In this case raise error is :is_admin attribute is defined but user
+    # In this case raise error if :is_admin attribute is defined but user
     #   is not allowed to change it
     proc do |data|
       if !data[:is_admin].nil? && !user.can.admin?
@@ -829,7 +827,7 @@ Joshua specific methods you can call inside API methods (ones in `member` or `co
 
 ### error
 
-If you want to manualy trigger errors
+If you want to manually trigger errors
 
 ```ruby
 rescue_from :foo do |error|
@@ -837,7 +835,7 @@ rescue_from :foo do |error|
 end
 
 def foo
-  # trigger named erorr
+  # trigger named error
   error :foo       # { success: false, code: 403, error: { messages: ['Policy error'] }}
 
   # default response status is 400
@@ -857,11 +855,11 @@ Response object is responsible for response render
   # respond with csv data
   # /api/user/1/send_csv
   def send_csv
-    response :csv do
+    response do
       @user.generate_csv_data
     end
   end
-  # Content-type: application/csv
+  # Content-type: text/plain
   # name, email, ...
 
   # response with CSV in response data block
@@ -917,7 +915,7 @@ end
 # }
 ```
 
-<a name="helper_methods"></a>
+<a name="helper-methods"></a>
 ### helper methods
 
 Helper methods are all instance methods defined outside `member` or `collection` scopes
@@ -931,8 +929,8 @@ You are free to use all HTTP error status codes, but we suggest to use only `400
 
 ```ruby
 rescue_from :big_load do
-  custom_looger :load_too_big
-  error 'There is to big load on the API, please try again or sign up for priority access'
+  custom_logger :load_too_big
+  error 'There is too big load on the API, please try again or sign up for priority access'
 end
 
 def foo
@@ -946,7 +944,7 @@ def foo
   error 'Object not found', status: 404, code: 404
 
   # unhandled, response.status: 500
-  raise 'Some erorr'
+  raise 'Some error'
 
   # execute rescued :big_load
   error :big_load
@@ -955,9 +953,9 @@ end
 
 ### @api - instance variable
 
-Joshua is not polluting scope with various instance varaibles. Only `@api` variable is used.
+Joshua is not polluting scope with various instance variables. Only `@api` variable is used.
 
-Basicly, this are options passed to `initialize` or `auto_mount` + instance specifics.
+Basically, these are options passed to `initialize` or `auto_mount` + instance specifics.
 
 ```ruby
 def foo
@@ -966,7 +964,7 @@ end
 ```
 
 * `@api.action`        - original triggered action
-* `@api.bearer`        - Bearer that is passed in or from a `Auth` [header](https://stackoverflow.com/questions/22229996/basic-http-and-bearer-token-authentication)
+* `@api.bearer`        - Bearer that is passed in or from an `Auth` [header](https://stackoverflow.com/questions/22229996/basic-http-and-bearer-token-authentication)
 * `@api.development`   - `true` or `false`. In development mode
 * `@api.id`            - in `member` methods, this will be resource ID.
 * `@api.opts`          - Options passed to initializer
@@ -976,19 +974,19 @@ end
 * `@api.response`      - internal response object, accessible from `response` method
 * `@api.uid`           - if using JSON RPC and id is passed, it will be stored here
 
-<a name="extending"></a>
+<a name="extending-and-including"></a>
 ## Extending, mounting, including
 
-There is no `mount`, you just include ruby files like you would to with any other ruby class.
+There is no `mount`, you just include ruby files like you would with any other ruby class.
 
-There are 2 ways to create modules ready for inlude
+There are 2 ways to create modules ready for include
 
 ### Plain ruby
 
 Define a module and include it as you would do with any other ruby class.
 
 ```ruby
-module ApiModuleClasic
+module ApiModuleClassic
   def self.included base
     base.collection do
       def foo
@@ -999,7 +997,7 @@ module ApiModuleClasic
 end
 
 class UserApi < Joshua
-  include ApiModuleClasic
+  include ApiModuleClassic
 end
 
 # /api/user/foo # { message: 'bar' }
@@ -1007,7 +1005,7 @@ end
 
 ### Calling super methods
 
-If you want to call `super` to call super method inside api methods, you need to call them with `super!`. You can also pass a super method name as a argument.
+If you want to call `super` to call super method inside api methods, you need to call them with `super!`. You can also pass a super method name as an argument.
 
 ```ruby
 class ParentApi < Joshua
@@ -1021,7 +1019,7 @@ end
 class ChildApi < ParentApi
   collection do
     def foo
-      super! # 122
+      super! # 123
       345
     end
 
@@ -1035,7 +1033,7 @@ end
 
 ### As a plugin
 
-Plugin inteface has few lines less.
+Plugin interface has few lines less.
 
 ```ruby
 Joshua.plugin :foo_bar do
@@ -1055,17 +1053,17 @@ end
 
 ## Initializing
 
-There are a three basic ways you can initialize yor app
+There are three basic ways you can initialize your app
 
-### 1.using config.ru - withouth framework
+### 1. Using config.ru - without framework
 
-This is the fasted way with best memory usage.
+This is fastest way with best memory usage.
 
 If you clone this repo and run `puma -p 4000` in root, you can see how local example works.
 
 
 ```ruby
-require_relative 'joshua'
+require 'joshua'
 
 class ApplicationApi < Joshua
 end
@@ -1083,9 +1081,9 @@ run ApplicationApi
 ```
 
 <a name="auto_mount"></a>
-### 2. auto mounting
+### 2. Auto mounting
 
-#### Using [Sinantra](http://sinatrarb.com/)
+#### Using [Sinatra](http://sinatrarb.com/)
 
 ```ruby
 # this will mount api in /api endpoint
@@ -1097,7 +1095,7 @@ post '/api*' do
 end
 ```
 
-#### Using [Ruby On Rals](https://rubyonrails.org/)
+#### Using [Ruby On Rails](https://rubyonrails.org/)
 
 ```ruby
 # config/routes.rb
@@ -1106,8 +1104,8 @@ mount ApplicationApi => '/api'
 match '/api/**', to: 'api#mount', via: [:get, :post]
 
 # app/controllers/api_controller.rb
-class ApiController < ApplicationController         
-  def mount 
+class ApiController < ApplicationController
+  def mount
     ApplicationApi.auto_mount mount_on: '/api',
       api_host: self,
       bearer: user.try(:token),
@@ -1119,7 +1117,7 @@ end
 <a name="manual_mount"></a>
 ### 3. Manual mount
 
-When manualy mounting APIs, you need to use specific Joshua endpoint and return the resposnse.
+When manually mounting APIs, you need to use specific Joshua endpoint and return the response.
 
 ```ruby
 post '/api/users/index' do
@@ -1144,14 +1142,14 @@ UserApi.render.show(123)
 # call user member method foo
 UserApi.render.foo(123, bar: 'baz')
 
-# or wih user token expanded
+# or with user token expanded
 UserApi.render :foo, id: 123, bearer: @user.token, params: { bar: 'baz' }
 ```
 
 ## Demos
 
 * Simple demo, runnable rack app https://github.com/dux/joshua/tree/master/demos/simple
-* Real life AppicationApi, BaseModelApi, UserApiSimple demo https://github.com/dux/joshua/tree/master/demos/inherited-model
+* Real life ApplicationApi, BaseModelApi, UserApiSimple demo https://github.com/dux/joshua/tree/master/demos/inherited-model
 
 ## Dependencies
 
@@ -1159,12 +1157,12 @@ UserApi.render :foo, id: 123, bearer: @user.token, params: { bar: 'baz' }
 * **json** - better JSON export
 * **http** - for JoshuaClient
 * **dry-inflector** - `classify`, `constantize`, ...
-* **html-tag** - for documention builder
-* **clean-hash** - for params in api methods
+* **html-tag** - for documentation builder
+* **hash_wia** - for params in api methods
 
 ## Development
 
-After checking out the repo, run bundle install to install dependencies. Then, run rspec to run the tests.
+After checking out the repo, run `bundle install` to install dependencies. Then, run `rspec` to run the tests.
 
 ## Contributing
 
@@ -1174,7 +1172,7 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/dux/jo
 
 ### Authentication and Authorization Patterns
 
-Joshua provides flexible authentication through the `@api.bearer` token and before filters:
+Joshua provides flexible authentication through `@api.bearer` token and before filters:
 
 #### JWT Token Authentication
 
@@ -1212,7 +1210,7 @@ class AdminApi < ApplicationApi
   before do
     error 403, 'Admin access required' unless @current_user&.admin?
   end
-  
+
   collection do
     def users
       User.all.map(&:api_export)
@@ -1230,15 +1228,15 @@ class ApplicationApi < Joshua
   class ValidationError < StandardError; end
   class NotFoundError < StandardError; end
   class RateLimitError < StandardError; end
-  
+
   rescue_from ValidationError do |e|
     error 422, 'Validation failed: %s' % e.message
   end
-  
+
   rescue_from NotFoundError do |e|
     error 404, e.message
   end
-  
+
   rescue_from RateLimitError do |e|
     response.header['X-RateLimit-Reset'] = e.reset_at.to_i.to_s
     error 429, 'Rate limit exceeded. Try again in %d seconds' % e.retry_after
@@ -1258,7 +1256,7 @@ class UsersApi < ApplicationApi
     end
     def signup
       user = User.new(params.to_h)
-      
+
       if user.save
         user.token
       else
@@ -1282,7 +1280,7 @@ class ModelApi < ApplicationApi
   rescue ActiveRecord::RecordNotFound
     error 404, '%s not found' % @model_class.name
   end
-  
+
   member do
     def update
       if @model.update(params.to_h)
@@ -1304,7 +1302,7 @@ class SequelModelApi < ApplicationApi
     @model = DB[:users].where(id: @api.id).first
     error 404, 'User not found' unless @model
   end
-  
+
   member do
     def show
       @model
@@ -1362,19 +1360,19 @@ class FilesApi < ApplicationApi
     end
     def upload
       uploaded_file = params.file
-      
+
       # Validate file
       error 'No file provided' unless uploaded_file
       error 'File too large' if uploaded_file[:tempfile].size > 10.megabytes
-      
+
       # Save file
       filename = SecureRandom.hex + File.extname(uploaded_file[:filename])
       path = Rails.root.join('uploads', filename)
-      
+
       File.open(path, 'wb') do |f|
         f.write(uploaded_file[:tempfile].read)
       end
-      
+
       { url: "/uploads/#{filename}", size: uploaded_file[:tempfile].size }
     end
   end
@@ -1391,7 +1389,7 @@ class ApplicationApi < Joshua
     response.header['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
     response.header['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
   end
-  
+
   # Handle preflight requests
   collection do
     allow :options
@@ -1413,7 +1411,7 @@ class ApplicationApi < Joshua
       key = "rate_limit:#{@current_user.id}:#{Time.now.to_i / 60}"
       count = Redis.current.incr(key)
       Redis.current.expire(key, 60) if count == 1
-      
+
       if count > 100 # 100 requests per minute
         error 429, 'Rate limit exceeded. Please try again later.'
       end
@@ -1432,34 +1430,34 @@ require 'spec_helper'
 
 RSpec.describe UsersApi do
   let(:user) { User.create!(email: 'test@example.com', token: 'test-token') }
-  
+
   describe 'POST /users/login' do
     it 'returns token for valid credentials' do
       result = UsersApi.render.login(user: 'foo', pass: 'bar')
-      
+
       expect(result[:success]).to be true
       expect(result[:data]).to match(/^token-/)
     end
-    
+
     it 'returns error for invalid credentials' do
       result = UsersApi.render.login(user: 'wrong', pass: 'wrong')
-      
+
       expect(result[:success]).to be false
       expect(result[:error][:messages]).to include('Wrong user or pass')
     end
   end
-  
+
   describe 'GET /users/:id/show' do
     it 'returns user data when authorized' do
       result = UsersApi.render.show(user.id, bearer: user.token)
-      
+
       expect(result[:success]).to be true
       expect(result[:data][:email]).to eq(user.email)
     end
-    
+
     it 'returns error when unauthorized' do
       result = UsersApi.render.show(user.id, bearer: 'invalid-token')
-      
+
       expect(result[:success]).to be false
       expect(result[:error][:code]).to eq(401)
     end
@@ -1475,16 +1473,16 @@ require 'rack/test'
 
 describe 'API Integration' do
   include Rack::Test::Methods
-  
+
   def app
     ApplicationApi
   end
-  
+
   it 'handles JSON requests' do
-    post '/api/users/login', 
+    post '/api/users/login',
          { user: 'foo', pass: 'bar' }.to_json,
          { 'CONTENT_TYPE' => 'application/json' }
-    
+
     expect(last_response.status).to eq(200)
     json = JSON.parse(last_response.body)
     expect(json['success']).to be true
@@ -1524,7 +1522,7 @@ class ApplicationApi < Joshua
       logger.error "API Error: #{e.message}\n#{e.backtrace.join("\n")}"
       error 500, 'Internal server error'
     end
-    
+
     # Add security headers
     after do
       response.header['X-Content-Type-Options'] = 'nosniff'
@@ -1564,7 +1562,7 @@ class ApplicationApi < Joshua
     logger.info "[#{@request_id}] #{@api.request.request_method} #{@api.request.path}"
     @start_time = Time.now
   end
-  
+
   after do
     duration = ((Time.now - @start_time) * 1000).round(2)
     status = response.error? ? 'ERROR' : 'SUCCESS'
@@ -1597,7 +1595,7 @@ class UserApi < Joshua
     def login
     end
   end
-  
+
   member do      # for routes with ID
     def show
     end
