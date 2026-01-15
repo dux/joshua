@@ -18,13 +18,14 @@ class Object
     if data.is_a?(Hash)
       puts JSON.pretty_generate(data)
     else
-      ap data
+      puts data.inspect
     end
   end
 
   def rr data
+    return if ENV['RACK_ENV'] == 'test'
     puts '- start: %s - %s' % [data.class, caller[0].sub(__dir__+'/', '')]
-    ap data
+    puts data.inspect
     puts '- end'
   end
 end
