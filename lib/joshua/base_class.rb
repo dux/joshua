@@ -231,22 +231,57 @@ class Joshua
       end
     end
 
-    # aleternative way to define a api function
-    # members do
+    # alternative way to define an api function
+    #
+    # Basic usage:
     #   define :foo do
-    #     params {}
-    #     proc {}
+    #     proc { ... }
     #   end
-    # end
-    def define name, &block
-      func = class_exec &block
+    #
+    # With HTTP method (RESTful style):
+    #   define get: :foo do
+    #     proc { ... }
+    #   end
+    #
+    # With allow option:
+    #   define :foo, allow: :get do
+    #     proc { ... }
+    #   end
+    #
+    # Multiple HTTP methods for same action:
+    #   define [:get, :put] => :show do
+    #     proc { ... }
+    #   end
+    #
+    #   define :show, allow: [:get, :put] do
+    #     proc { ... }
+    #   end
+    def define name = nil, allow: nil, **http_methods, &block
+      # Handle define get: :foo or define [:get, :put]: :foo syntax
+      if name.nil? && http_methods.any?
+        http_method_key, action_name = http_methods.first
+        # http_method_key can be :get or [:get, :put]
+        define_single_action(action_name, http_method_key, &block)
+      else
+        # Handle define :foo, allow: :get or define :foo, allow: [:get, :put] syntax
+        define_single_action(name, allow, &block)
+      end
+    end
+
+    private
+
+    def define_single_action(name, http_methods = nil, &block)
+      allow(*Array(http_methods)) if http_methods
+      func = class_exec(&block)
 
       if func.is_a?(Proc)
         self.define_method(name, func)
       else
-        raise 'Member block has to return a Func object'
+        raise 'Define block has to return a Proc object'
       end
     end
+
+    public
 
     # /api/companies/1/show
     def member &block
@@ -307,16 +342,22 @@ class Joshua
 
     # allow alternative method access
     # allow :get
-    # if defined, access will be allowed via POST + allowed method
-    def allow type
+    # allow :get, :put
+    # allow [:get, :put]
+    # if defined, access will be allowed via POST + allowed methods
+    def allow *types
       if @method_type
-        type = type.to_s.to_sym
+        types = types.flatten.map do |type|
+          type = type.to_s.to_sym
 
-        unless %i(get head post put patch delete trace).include?(type)
-          raise ArgumentError.new('"%s" is not allowed http method type' % type)
+          unless %i(get head post put patch delete trace).include?(type)
+            raise ArgumentError.new('"%s" is not allowed http method type' % type)
+          end
+
+          type.to_s.upcase
         end
 
-        @@opts[:allow] = type.to_s.upcase
+        @@opts[:allow] = types
       else
         raise ArgumentError.new('allow can only be set on methods')
       end

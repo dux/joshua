@@ -185,12 +185,32 @@ end
 
 ### 9. HTTP Methods
 
-Default is POST only. Allow others:
+Default is POST only. Use RESTful syntax to specify HTTP methods:
 
 ```ruby
 member do
-  define :show do
-    allow :get
+  # Single method - symbol key syntax
+  define get: :show do
+    proc { }
+  end
+
+  define put: :update do
+    proc { }
+  end
+
+  # Multiple methods - hash rocket required for array key
+  define [:get, :put] => :settings do
+    proc { }
+  end
+
+  # Alternative: allow inside block
+  define :archive do
+    allow :put
+    proc { }
+  end
+
+  define :config do
+    allow :get, :put, :delete
     proc { }
   end
 end

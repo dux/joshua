@@ -90,7 +90,7 @@ class Joshua
       out[:name] = name
       out[:description] = item[:desc] if item[:desc]
       out[:request] = {
-        method: item[:allow] || 'POST',
+        method: Array(item[:allow]).first || 'POST',
         header: [],
         url: {
           raw:      ([base] + path).join('/'),

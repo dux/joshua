@@ -51,9 +51,9 @@ class Joshua
   end
 
   def execute_call
-    allow_type   = @api.method_opts[:allow] || 'POST'
+    allow_types  = Array(@api.method_opts[:allow] || 'POST')
     request_type = @api.request&.request_method || 'POST'
-    is_allowed   = @api.development || ['POST', allow_type].include?(request_type)
+    is_allowed   = @api.development || ['POST', *allow_types].include?(request_type)
 
     if is_allowed
       begin

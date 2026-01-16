@@ -54,7 +54,7 @@ describe 'inheritance and super!' do
       parent_opts = ModelApi.opts
 
       # Both should have call_me_in_child but with different allow values
-      expect(child_opts[:collection][:call_me_in_child][:allow]).to eq('DELETE')
+      expect(child_opts[:collection][:call_me_in_child][:allow]).to eq(['DELETE'])
     end
   end
 

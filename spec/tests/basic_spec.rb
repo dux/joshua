@@ -49,7 +49,7 @@ describe 'dev' do
   end
 
   it 'defines allowed method' do
-    expect(UserApi.opts.dig(:collection, :call_me_in_child, :allow)).to eq 'DELETE'
+    expect(UserApi.opts.dig(:collection, :call_me_in_child, :allow)).to eq ['DELETE']
   end
 
   it 'extracts bearer token from Authorization header' do
