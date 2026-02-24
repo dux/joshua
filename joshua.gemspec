@@ -1,6 +1,7 @@
 gem_files = [:lib]
   .inject([]) { |t, el| t + `find ./#{el}`.split($/) }
-  .push './.version'
+  .push('./.version')
+  .push('./bin/joshua')
 
 Gem::Specification.new 'joshua' do |gem|
   gem.version     = File.read('.version')
@@ -12,7 +13,7 @@ Gem::Specification.new 'joshua' do |gem|
   gem.email       = 'rejotl@gmail.com'
   gem.files       = gem_files
 
-  gem.executables = []
+  gem.executables = ['joshua']
 
   gem.add_runtime_dependency 'json'
   gem.add_runtime_dependency 'html-tag'

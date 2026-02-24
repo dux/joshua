@@ -11,6 +11,8 @@ require_relative '../api/company_api'
 require_relative '../api/user_api'
 
 require_relative '../api/models.rb'
+require_relative '../api/todo_models'
+require_relative '../api/board_api'
 
 class Object
   def pp data

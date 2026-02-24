@@ -3,7 +3,7 @@ class Joshua
   @@opts   = {}
 
   class << self
-    # perform auto_mount from a rake call
+    # perform auto_mount from a rack call
     def call env = nil
       return render unless env
 
@@ -16,7 +16,12 @@ class Joshua
           [Doc.misc_file('favicon.png')]
         ]
       else
-        data = auto_mount request: request, development: ENV['RACK_ENV'] == 'development'
+        api_host = Struct.new(:request, :response).new(
+          request,
+          Struct.new(:header, :status).new({}, 200)
+        )
+
+        data = auto_mount api_host: api_host, development: ENV['RACK_ENV'] == 'development'
 
         if data.is_a?(Hash)
           [
@@ -54,6 +59,7 @@ class Joshua
         response.header['Content-Type'] = 'application/json' if response
 
         body     = request.body.read.to_s
+        request.body.rewind
         body     = body[0] == '{' ? JSON.parse(body) : nil
 
         # class: klass, params: params, bearer: bearer, request: request, response: response, development: development
