@@ -1,4 +1,4 @@
-# Joshua AI Library Guide
+# Joshua API - AI Library Guide
 
 This guide helps AI agents understand, use, and write code for the Joshua Ruby API framework.
 

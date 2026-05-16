@@ -59,7 +59,7 @@ class Joshua
         response.header['Content-Type'] = 'application/json' if response
 
         body     = request.body.read.to_s
-        request.body.rewind
+        request.body.rewind if request.body.respond_to?(:rewind)
         body     = body[0] == '{' ? JSON.parse(body) : nil
 
         # class: klass, params: params, bearer: bearer, request: request, response: response, development: development
@@ -168,7 +168,7 @@ class Joshua
     # in api methods
     # error 404
     # error :not_found
-    def rescue_from klass, desc=nil, &block
+    def rescue_from klass=:all, desc=nil, &block
       RESCUE_FROM[klass] = desc || block
     end
 
