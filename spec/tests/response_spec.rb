@@ -20,10 +20,8 @@ describe Joshua::Response do
 
   it 'returns nil data when method returns nil' do
     class NilDataApi < ApplicationApi
-      collection do
-        def return_nil
-          nil
-        end
+      def return_nil
+        nil
       end
     end
     response = NilDataApi.render :return_nil
@@ -38,11 +36,9 @@ describe Joshua::Response do
 
   it 'handles response.data= assignment' do
     class DataAssignApi < ApplicationApi
-      collection do
-        def assign_data
-          response.data = { custom: 'value' }
-          'ignored'
-        end
+      def assign_data
+        response.data = { custom: 'value' }
+        'ignored'
       end
     end
     response = DataAssignApi.render :assign_data

@@ -111,10 +111,10 @@ base = HOST.chomp('/')
 namespace_filter = nil
 
 url = if path.nil? || path == '/'
-  URI("#{base}/_/raw")
+  URI("#{base}/sys/schema")
 elsif !path.include?('/') && params.empty?
   namespace_filter = path
-  URI("#{base}/_/raw")
+  URI("#{base}/sys/schema")
 else
   URI("#{base}/#{path.sub(%r{^/}, '')}")
 end
@@ -144,6 +144,12 @@ end
 
 begin
   data = JSON.parse(response.body)
+
+  # /sys/schema returns a wrapper envelope; the per-namespace listing
+  # lives under `apis`. Unwrap so CLI consumers see the flat namespace map.
+  if url.path.end_with?('/sys/schema') && data.is_a?(Hash) && data.key?('apis')
+    data = data['apis']
+  end
 
   if namespace_filter
     if data.key?(namespace_filter)

@@ -1,6 +1,6 @@
 module ApiModuleClasic
   def self.included base
-    base.collection do
+    base.class_eval do
       def module_clasic
         'is_module'
       end
@@ -9,9 +9,7 @@ module ApiModuleClasic
 end
 
 Joshua.plugin :test_1 do
-  collection do
-    def plugin_test
-      'from_plugin'
-    end
+  def plugin_test
+    'from_plugin'
   end
 end

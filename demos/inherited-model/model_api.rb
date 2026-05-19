@@ -10,18 +10,22 @@ class ModelApi < ApplicationApi
     raise '%s not found' % method_name unless method_name
 
     if name == :create
-      collection do
-        self.desc   desc   if desc
-        self.detail detail if detail
+      desc_text   = desc
+      detail_text = detail
+      class_eval do
+        self.desc   desc_text   if desc_text
+        self.detail detail_text if detail_text
         self.params do
           self.set object_name, :model
         end
         define_method(name) { send('generated_%s' % name) }
       end
     else
-      member do
-        self.desc   desc   if desc
-        self.detail detail if detail
+      desc_text   = desc
+      detail_text = detail
+      ref do
+        self.desc   desc_text   if desc_text
+        self.detail detail_text if detail_text
         if name == :update
           self.params do
             self.set object_name, :model
@@ -41,9 +45,9 @@ class ModelApi < ApplicationApi
       .singularize
       .constantize
 
-    if @api.id
-      @object = base.find @api.id
-      error 'Object %s[%s] is not found' % [base, @api.id] unless @object
+    if @ref
+      @object = base.find @ref
+      error 'Object %s[%s] is not found' % [base, @ref] unless @object
     else
       @object = base.new
     end
@@ -58,7 +62,7 @@ class ModelApi < ApplicationApi
     end
   end
 
-  ###
+  private
 
   def same_as_last?
     return unless respond_to?(:created_by)
@@ -122,8 +126,6 @@ class ModelApi < ApplicationApi
       .attributes
   end
 
-  ###
-
   def generated_create
     for k, v in object_params
       v = nil if v.blank?
@@ -154,7 +156,6 @@ class ModelApi < ApplicationApi
       k = k.to_s
       v = v.xuniq if v.is_a?(Array)
 
-      # db_type = @object.db_schema.dig(k.to_sym, :db_type)
       db_type = @object.class.columns.find { |c| c.name == k.to_s }.type.to_s
 
       if k.starts_with?('toggle__')
@@ -198,8 +199,6 @@ class ModelApi < ApplicationApi
 
   # if you put active boolean field to objects, then they will be unactivated on destroy
   def generated_destroy force: false
-    # @object.can.delete!
-
     if !force && @object.respond_to?(:is_deleted)
       @object.update is_deleted: true
 

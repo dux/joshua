@@ -1,113 +1,84 @@
-# reponse from /api/_/foo
+# Postman collection v2.1 generator. Consumes Joshua::Introspect.schema
+# rather than poking OPTS directly. Extension hooks (formdata_<type>, e.g.
+# formdata_model) are still resolved via respond_to?/send, so user reopens
+# of this class to add per-type formdata builders keep working.
+#
+# Reached via Joshua::SysApi#postman -> /<mount_on>/sys/postman.
 
 class Joshua
   class PostmanSchema
-    def initialize api
-      @api = api
+    def initialize api, mount_on: nil
+      @api      = api
+      @mount_on = mount_on
     end
 
     def postman
+      doc = Joshua::Introspect.schema(mount_on: @mount_on)
+
       out = {
         info: {
-          _postman_id: request.url,
+          _postman_id:   request.url,
           _bearer_token: @api[:bearer],
-          name: request.host,
-          schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+          name:          request.host,
+          schema:        'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'
         },
         item: []
       }
 
-      for api_name, raw_data in raw
-        hash = {}
-        hash[:name] = api_name
-        hash[:item] = []
+      doc[:apis].each do |api_name, api_doc|
+        group = { name: api_name, item: [] }
 
-        for type in [:collection, :member]
-          next unless raw_data[type]
+        [:collection, :member].each do |type|
+          methods = api_doc[type] or next
 
-          if raw_data[type]
-            items = []
-
-            for key, value in raw_data[type]
-              items.push postman_add_method(
-                type: type,
-                object_name: api_name,
-                name: key,
-                item: value
-              )
-            end
-
-            hash[:item].push *items
-            # to have it grouped by collection or member methods
-            # hash[:item].push(name: type, item: items)
+          methods.each do |action, mdata|
+            group[:item].push postman_add_method(
+              type:        type,
+              object_name: api_name,
+              name:        action.to_s,
+              item:        mdata
+            )
           end
         end
 
-        out[:item].push hash
+        out[:item].push group
       end
 
       @api[:development] ? JSON.pretty_generate(out) : out.to_json
     end
 
-    def raw
-      unwanted = %w(all member collection)
-      {}.tap do |doc|
-        for el in Joshua.documented
-          doc[el.to_s.sub(/Api$/, '').underscore] = el.opts.filter do |k, v|
-            for k1, v1 in v
-              if v1.is_a?(Hash)
-                for k2 in v1.keys
-                  # remove Typero
-                  v1.delete(k2) if k2.to_s.start_with?('_')
-                end
-              end
-            end
-
-            !unwanted.include?(k.to_s.split('_')[1])
-          end
-        end
-      end
-    end
-
     private
 
+    # Build a single postman item from an introspection method entry.
+    # `item` is the per-method hash from Introspect (path, http, params, desc).
     def postman_add_method type:, object_name:, name:, item:
-      path = []
+      raw_url     = absolute_url(item[:path])
+      path_parts  = item[:path].sub(/^\//, '').split('/')
+      display     = type == :collection ? "#{name}*" : name
 
-      base = request.url.split('/_/').first
-      base = base.split('/')
-
-      path.push base.pop
-      base = base.join('/')
-
-      path.push object_name
-      path.push ':id' if type == :member
-      path.push name
-
-      name = '%s*' % name if type == :collection
-
-      out = {}
-      out[:name] = name
-      out[:description] = item[:desc] if item[:desc]
-      out[:request] = {
-        method: Array(item[:allow]).first || 'POST',
-        header: [],
-        url: {
-          raw:      ([base] + path).join('/'),
-          protocol: base.split(':').first,
-          host:     request.host.split('.'),
-          port:     request.port,
-          path:     path
+      out = {
+        name:    display,
+        request: {
+          method: Array(item[:http]).reject { |m| m == 'POST' }.first || 'POST',
+          header: [],
+          url: {
+            raw:      raw_url,
+            protocol: request.scheme,
+            host:     request.host.split('.'),
+            port:     request.port,
+            path:     path_parts
+          }
         }
       }
+      out[:description] = item[:desc] if item[:desc]
 
-      for key, value in (item[:params] || {})
+      (item[:params] || {}).each do |key, value|
         out[:request][:body] ||= { mode: 'formdata', formdata: [] }
 
         formdata_custom = 'formdata_%s' % value[:type]
 
-        # if value[:type] == 'model' and key == 'user' you can define "formdata_model"
-        # that returns list of fields for defined model
+        # if value[:type] == 'model' and key == 'user' you can define
+        # `formdata_model` that returns list of fields for that model
         formdata_value = if respond_to?(formdata_custom)
           opts = { key: key, value: value, name: name, type: type, group: object_name }
           [send(formdata_custom, opts.to_hwia)].flatten
@@ -120,6 +91,12 @@ class Joshua
       end
 
       out
+    end
+
+    # Combine request host with the introspection path (which already
+    # includes mount_on, e.g. "/api/company/:id/show").
+    def absolute_url path
+      "#{request.scheme}://#{request.host_with_port}#{path}"
     end
 
     def request

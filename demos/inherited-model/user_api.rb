@@ -4,34 +4,30 @@ class UsersApi < ModelApi
   generate :show
   generate :update
 
-  collection do
-    define :signup do
-      desc 'Signup via email to app'
-      hcaptcha!
-      params do
-        email :email
-      end
-      proc do
-        Mailer.email_login(params.email).deliver
-        'Email with login link sent'
-      end
+  define :signup do
+    desc 'Signup via email to app'
+    hcaptcha!
+    params do
+      email :email
     end
-
-    define :list do
-      prod do
-
-      end
+    proc do
+      Mailer.email_login(params.email).deliver
+      'Email with login link sent'
     end
   end
 
-  member do
+  define :list do
+    prod do
+
+    end
+  end
+
+  ref do
     before do
       unless user.can.admin?
         error('This is not you! Hack attempt logged :)') if @user.id != user.id
       end
     end
-
-    ###
 
     define :delete do
       desc 'Delete user by disabling it'

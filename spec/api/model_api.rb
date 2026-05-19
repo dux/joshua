@@ -1,13 +1,11 @@
 class ModelApi < ApplicationApi
-  collection do
-    def call_me_in_child
-      @number = 2345
-    end
+  def call_me_in_child
+    @number = 2345
   end
 
-  member do
+  ref do
     before do
-      id = @api.id.to_s == @api.id.to_i.to_s ? @api.id.to_i : nil
+      id = @ref.to_s == @ref.to_i.to_s ? @ref.to_i : nil
 
       if id == 1
         @model = Company.new

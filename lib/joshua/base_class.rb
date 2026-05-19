@@ -13,7 +13,7 @@ class Joshua
         [
           200,
           { 'Cache-Control'=>'public; max-age=1000000' },
-          [Doc.misc_file('favicon.png')]
+          [File.read("#{__dir__}/../misc/favicon.png")]
         ]
       else
         api_host = Struct.new(:request, :response).new(
@@ -23,6 +23,11 @@ class Joshua
 
         data = auto_mount api_host: api_host, development: ENV['RACK_ENV'] == 'development'
 
+        # 302 redirect sentinel: auto_mount returned { _redirect: '/path' }
+        if data.is_a?(Hash) && data[:_redirect]
+          return [302, { 'Location' => data[:_redirect], 'Content-Type' => 'text/html' }, []]
+        end
+
         if data.is_a?(Hash)
           [
             data[:status] || 200,
@@ -31,11 +36,16 @@ class Joshua
           ]
         else
           data = data.to_s
-          [
-            200,
-            { 'Content-Type' => 'text/html', 'Cache-Control'=>'public; max-age=3600' },
-            [data]
-          ]
+          # merge any headers the action set on api_host.response (Content-Type,
+          # Content-Disposition, ETag, Last-Modified, etc.) with sensible defaults
+          headers = { 'Cache-Control' => 'public; max-age=3600' }
+          headers.merge!(api_host.response.header || {})
+          headers['Content-Type'] ||= 'text/html'
+          # the action can also set status (e.g. send_file emits 304 on If-None-Match)
+          status = api_host.response.status || 200
+          # 304 / 204 must NOT have a body per HTTP spec
+          body = [204, 304].include?(status) ? [] : [data]
+          [status, headers, body]
         end
       end
     end
@@ -52,13 +62,13 @@ class Joshua
       mount_on   = [request.base_url, mount_on].join('') unless mount_on.to_s.include?('//')
 
       if request.url == mount_on && request.request_method == 'GET'
-        response.header['Content-Type'] = 'text/html' if response
-
-        Doc.render request: request, bearer: bearer
+        # root GET -> redirect to interactive explorer at <mount_on>/sys/web
+        prefix = (OPTS.dig(:api, :mount_on) || '/').to_s.chomp('/')
+        { _redirect: "#{prefix}/sys/web" }
       else
         response.header['Content-Type'] = 'application/json' if response
 
-        body     = request.body.read.to_s
+        body     = request.body ? request.body.read.to_s : ''
         request.body.rewind if request.body.respond_to?(:rewind)
         body     = body[0] == '{' ? JSON.parse(body) : nil
 
@@ -68,23 +78,33 @@ class Joshua
         opts[:development] = development
         opts[:bearer]      = bearer
 
+        # A JSON request body is either:
+        # (a) a JSON-RPC envelope { class, action, ref, token, params } - has
+        #     'class' or 'action' at the top, in which case the URL is ignored.
+        #     For member actions provide `ref` (or `id` as alias) with the
+        #     resource id; action stays a plain string.
+        # (b) a plain params object - use URL path for class+action, body for
+        #     params. This matches what fetch(path, { body: JSON.stringify(...) })
+        #     looks like in the wild.
+        is_rpc_envelope = body && (body['class'] || body['action'])
+
         action =
-        if body
-          # {
-          #   "id": 'foo',         # unique ID that will be returned, as required by JSON RPC spec
-          #   "class": 'v1/users', # v1/users => V1::UsersApi
-          #   "action": 'index',   # "index' or "6/info" or [6, "info"]
-          #   "token": 'ab12ef',   # api_token (bearer)
-          #   "params": {}         # methos params
-          # }
+        if is_rpc_envelope
           opts[:params] = body['params'] || {}
           opts[:bearer] ||= body['token'] if body['token']
           opts[:class]  = body['class']
 
+          # resource ref (member actions); 'ref' is canonical, 'id' is alias
+          ref = body['ref']
+          ref = body['id'] if ref.nil?
+          opts[:id] = ref unless ref.nil?
+
           body['action']
         else
-          opts[:params] = request.params || {}
-          opts[:bearer] ||= opts[:params][:api_token] if opts[:params][:api_token]
+          opts[:params] = body || request.params || {}
+          if opts[:params].is_a?(Hash)
+            opts[:bearer] ||= opts[:params]['api_token'] || opts[:params][:api_token]
+          end
 
           mount_on = mount_on+'/' unless mount_on.end_with?('/')
           path     = request.url.split(mount_on, 2).last.split('?').first.to_s
@@ -121,25 +141,21 @@ class Joshua
       end
 
       api_class = if klass = opts.delete(:class)
-        # /api/_/foo
-        if klass == '_'
-          klass = Joshua::PostmanSchema.new(opts)
-
-          if klass.respond_to?(action.first)
-            return klass.send action.first.to_sym
-          else
-            return error 'Action %s not defined' % action.first
-          end
-        end
-
         klass = klass.split('/') if klass.is_a?(String)
         klass[klass.length-1] += '_api'
         klass = klass.join('/').classify
 
+        # try user-land top-level first, fall back to Joshua-internal
+        # namespace so reserved APIs like `sys` -> Joshua::SysApi work
+        # without polluting the global namespace.
         begin
           klass.constantize
-        rescue NameError => e
-          return error 'API class "%s" not found' % klass
+        rescue NameError
+          begin
+            "Joshua::#{klass}".constantize
+          rescue NameError
+            return error 'API class "%s" not found' % klass
+          end
         end
       else
         self
@@ -228,10 +244,6 @@ class Joshua
     def annotation name, &block
       ANNOTATIONS[name] = block
       self.define_singleton_method name do |*args|
-        unless @method_type
-          error 'Annotation "%s" defined outside the API method blocks (member & collections)' % name
-        end
-
         @@opts[:annotations] ||= {}
         @@opts[:annotations][name] = args
       end
@@ -289,21 +301,72 @@ class Joshua
 
     public
 
-    # /api/companies/1/show
-    def member &block
-      @method_type = :member
-      func = class_exec &block
-      @method_type = nil
-    end
-    alias :members :member
+    # Defines a group of member ("ref") actions. Each method defined inside the
+    # block (public AND private) is renamed to `<name>_ref` after the block ends,
+    # so collection actions can keep the un-suffixed names. The renamed method is
+    # what dispatch invokes when a request includes a resource id segment.
+    #
+    #   ref do
+    #     before do
+    #       @user = User.find(@ref)
+    #     end
+    #
+    #     def show       # becomes :show_ref
+    #       @user.export
+    #     end
+    #
+    #     private
+    #
+    #     def helper     # becomes :helper_ref (private)
+    #     end
+    #   end
+    def ref &block
+      raise ArgumentError, 'ref requires a block' unless block_given?
 
-    # /api/companies/list?countrty_id=1
-    def collection &block
-      @method_type = :collection
-      class_exec &block
+      before_snapshot = {}
+      (instance_methods(false) + private_instance_methods(false) + protected_instance_methods(false)).each do |n|
+        before_snapshot[n] = instance_method(n)
+      end
+
+      @method_type = :member
+      class_exec(&block)
       @method_type = nil
+
+      # epilogue: rename newly defined methods to *_ref. The define_method calls
+      # below would re-fire method_added with stale (empty) @@opts and overwrite
+      # the just-registered entries; @in_ref_epilogue suppresses that.
+      @in_ref_epilogue = true
+
+      # iteration list is captured here - methods we define below (with _ref
+      # suffix) aren't in it, so we don't risk re-processing them. Don't add a
+      # `_ref` suffix guard here: user methods like `def get_ref` would be
+      # incorrectly skipped.
+      methods_at_end = (instance_methods(false) + private_instance_methods(false) + protected_instance_methods(false))
+      methods_at_end.each do |n|
+        after_impl  = instance_method(n)
+        before_impl = before_snapshot[n]
+
+        next if before_impl && before_impl == after_impl
+
+        was_private   = private_method_defined?(n)
+        was_protected = protected_method_defined?(n)
+
+        if before_impl.nil?
+          # newly defined inside the block - rename to _ref
+          remove_method(n)
+        else
+          # redefined inside the block - restore outer impl, inner becomes _ref
+          remove_method(n)
+          define_method(n, before_impl)
+        end
+
+        define_method(:"#{n}_ref", after_impl)
+        send(:private,   :"#{n}_ref") if was_private
+        send(:protected, :"#{n}_ref") if was_protected
+      end
+
+      @in_ref_epilogue = false
     end
-    alias :collections :collection
 
     # params do
     #   name? String
@@ -328,22 +391,26 @@ class Joshua
 
     # api method description
     def desc data
-      if @method_type
-        @@opts[:desc] = data
-      else
-        set :opts, :desc, data
-      end
+      @@opts[:desc] = data
+    end
+
+    # set class-level description
+    def class_desc data
+      set :opts, :desc, data
     end
 
     # api method detailed description
     def detail data
       return if data.to_s == ''
 
-      if @method_type
-        @@opts[:detail] = data
-      else
-        set :opts, :detail, data
-      end
+      @@opts[:detail] = data
+    end
+
+    # set class-level detailed description
+    def class_detail data
+      return if data.to_s == ''
+
+      set :opts, :detail, data
     end
 
     # allow alternative method access
@@ -352,21 +419,17 @@ class Joshua
     # allow [:get, :put]
     # if defined, access will be allowed via POST + allowed methods
     def allow *types
-      if @method_type
-        types = types.flatten.map do |type|
-          type = type.to_s.to_sym
+      types = types.flatten.map do |type|
+        type = type.to_s.to_sym
 
-          unless %i(get head post put patch delete trace).include?(type)
-            raise ArgumentError.new('"%s" is not allowed http method type' % type)
-          end
-
-          type.to_s.upcase
+        unless %i(get head post put patch delete trace).include?(type)
+          raise ArgumentError.new('"%s" is not allowed http method type' % type)
         end
 
-        @@opts[:allow] = types
-      else
-        raise ArgumentError.new('allow can only be set on methods')
+        type.to_s.upcase
       end
+
+      @@opts[:allow] = types
     end
 
     # define response content type (defaults to JSON)
@@ -387,11 +450,7 @@ class Joshua
 
     # allow methods without @api.bearer token set
     def unsafe
-      if @method_type
-        @@opts[:unsafe] = true
-      else
-        raise ArgumentError.new('Only api methods can be unsafe')
-      end
+      @@opts[:unsafe] = true
     end
 
     # block execute before any public method or just some member or collection methods
@@ -416,7 +475,7 @@ class Joshua
         # without a block execute it
         blk = PLUGINS[name]
         raise ArgumentError.new('Plugin :%s not defined' % name) unless blk
-        instance_exec &blk
+        class_exec &blk
       end
     end
 
@@ -450,17 +509,35 @@ class Joshua
       Typero.schema name, &block
     end
 
-    # here we capture member & collection metods
+    # capture API methods.
+    # * methods inside `ref do` register under :member (renamed to *_ref by ref epilogue)
+    # * public methods at class root register under :collection
+    # * private/protected methods are NOT registered as endpoints
+    # * methods ending in _ref are produced by the ref epilogue and skipped
     def method_added name
-      return if name.to_s.start_with?('_api_')
-      return unless @method_type
+      # @in_ref_epilogue is set while ref renames methods to *_ref - skip those.
+      # Do NOT add a `_ref` suffix guard: a user-defined method like
+      # `def get_ref` would be wrongly skipped.
+      return if @in_ref_epilogue
 
-      set @method_type, name, @@opts
+      if @method_type == :member
+        # private helpers inside ref do still get _ref appended but are not endpoints
+        if private_method_defined?(name) || protected_method_defined?(name)
+          @@opts = {}
+          return
+        end
 
-      @@opts = {}
+        set :member, name, @@opts
+        @@opts = {}
+      elsif @method_type.nil?
+        if private_method_defined?(name) || protected_method_defined?(name)
+          @@opts = {}
+          return
+        end
 
-      alias_method "_api_#{@method_type}_#{name}", name
-      remove_method name
+        set :collection, name, @@opts
+        @@opts = {}
+      end
     end
 
     def make_hash_html_safe hash
@@ -474,10 +551,6 @@ class Joshua
     end
 
     private
-
-    def only_in_api_methods!
-      raise ArgumentError, "Available only inside collection or member block for API methods." unless @method_type
-    end
 
     def set_callback name, block
       name = [name, @method_type || :all].join('_').to_sym

@@ -1,0 +1,121 @@
+# run with `hammer` (requires lux-hammer gem installed)
+
+task :test do
+  desc 'Run the full RSpec suite'
+  proc { sh 'bundle exec rspec spec' }
+end
+
+namespace :test do
+  task :web do
+    desc 'Boot demos/web with puma + rerun (auto-reload on .rb change) and open /api/sys/web'
+    opt :port,    type: :integer, default: 4567,  desc: 'port to bind'
+    opt :no_open, type: :boolean, default: false, desc: "don't auto-open the browser"
+    opt :bare,    type: :boolean, default: false, desc: 'skip rerun (no auto-reload)'
+
+    proc do |o|
+      Dir.chdir 'demos/web' do
+        sh 'bundle check >/dev/null 2>&1 || bundle install'
+
+        # rerun watches .rb files in demos/web AND in the gem itself, so editing
+        # joshua/lib/joshua/*.rb or demos/web/apis/*.rb auto-restarts puma.
+        # lib/web/* (html/js/fez) are read fresh per request by Joshua::Web,
+        # so no restart is needed for those - just refresh the browser.
+        runner = if o[:bare]
+          "bundle exec puma -p #{o[:port]}"
+        else
+          "bundle exec rerun --dir 'apis,../../lib' --pattern '**/*.rb' -- puma -p #{o[:port]}"
+        end
+
+        pid = spawn runner
+        Signal.trap('INT')  { Process.kill('TERM', pid) rescue nil; exit }
+        Signal.trap('TERM') { Process.kill('TERM', pid) rescue nil; exit }
+
+        sleep 1.5
+        url = "http://localhost:#{o[:port]}/api/sys/web"
+        system "open #{url}" unless o[:no_open]
+        say.green "puma pid=#{pid} -> #{url}  (#{o[:bare] ? 'no auto-reload' : 'auto-reload via rerun'}; Ctrl-C to stop)"
+
+        Process.wait pid
+      end
+    end
+  end
+end
+
+namespace :gem do
+  task :version do
+    desc 'Print the current gem version'
+    proc { say File.read('.version').strip }
+  end
+
+  namespace :version do
+    task :inc do
+      desc 'Bump the version in .version (patch by default)'
+      opt :bump, default: 'patch', desc: 'major | minor | patch'
+
+      proc do |opts|
+        file  = '.version'
+        old   = File.read(file).strip
+        parts = old.split('.').map(&:to_i)
+        error "bad version in #{file}: #{old.inspect}" unless parts.size == 3
+
+        case opts[:bump]
+        when 'major' then parts = [parts[0] + 1, 0, 0]
+        when 'minor' then parts = [parts[0], parts[1] + 1, 0]
+        when 'patch' then parts[2] += 1
+        else error "unknown bump: #{opts[:bump]} (major | minor | patch)"
+        end
+
+        newv = parts.join('.')
+        File.write('.version.prev', "#{old}\n")
+        File.write(file, "#{newv}\n")
+        say "#{old} -> #{newv}", :green
+      end
+    end
+  end
+
+  task :build do
+    desc 'Build the joshua gem'
+    proc do
+      Dir.glob('*.gem').each do |f|
+        File.delete(f)
+        say "removed #{f}", :gray
+      end
+      sh 'gem build joshua.gemspec'
+    end
+  end
+
+  task :publish do
+    desc 'Inc ver, build and push the gem to RubyGems'
+    proc do
+      hammer 'gem:version:inc'
+      hammer 'gem:build'
+
+      file = Dir.glob('joshua-*.gem').sort.last
+      error 'no built gem found' unless file
+      error 'cancelled' unless yes? "push #{file} to RubyGems?"
+      sh "gem push #{file}"
+    end
+  end
+end
+
+task :gh do
+  desc 'Open the GitHub repo in the browser'
+  proc { sh 'open https://github.com/dux/joshua' }
+end
+
+task :info do
+  desc 'Show project stats'
+  proc do
+    rb_files   = Dir.glob('lib/**/*.rb')
+    spec_files = Dir.glob('spec/**/*_spec.rb')
+    loc        = rb_files.sum { |f| File.read(f).each_line.count }
+    examples   = spec_files.sum { |f| File.read(f).scan(/^\s+(it|specify)\b/).size }
+    sha        = `git rev-parse --short HEAD 2>/dev/null`.strip
+
+    say "  version:    #{File.read('.version').strip}"
+    say "  lib files:  #{rb_files.size} (#{loc} LOC)"
+    say "  spec files: #{spec_files.size} (#{examples} examples)"
+    say "  homepage:   https://github.com/dux/joshua"
+    say "  git head:   #{sha}" unless sha.empty?
+  end
+end

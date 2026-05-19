@@ -21,6 +21,8 @@ class ApplicationApi < Joshua
     end
   end
 
+  private
+
   def user
     User.current || error('User session is required to perform the action')
   end

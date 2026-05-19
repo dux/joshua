@@ -48,6 +48,10 @@ class Joshua
     @api.opts          = HashWia.new opts
     @api.api_host      = api_host
     @api.response      = ::Joshua::Response.new @api
+
+    # convenience mirrors of @api.id / @api.bearer, available to before-callbacks
+    @ref          = @api.id
+    @bearer_token = @api.bearer
   end
 
   def execute_call
@@ -108,23 +112,29 @@ class Joshua
   end
 
   def resolve_api_body &block
-    # if we have model defiend, we execute member otherwise collection
-    type = @api.id ? :member : :collection
-    api_method = '_api_%s_%s' % [type, @api.action]
+    type = @ref ? :member : :collection
 
-    unless respond_to?(api_method)
+    unless self.class.opts.dig(type, @api.action)
+      raise Joshua::Error, "Api method #{type}:#{@api.action} not found"
+    end
+
+    method_name = @ref ? "#{@api.action}_ref" : @api.action.to_s
+
+    # belt-and-braces: never dispatch to a method that became private/protected
+    # after registration (e.g. via `private :name` flip post-def)
+    if self.class.private_method_defined?(method_name) || self.class.protected_method_defined?(method_name)
       raise Joshua::Error, "Api method #{type}:#{@api.action} not found"
     end
 
     # execute before "in the wild"
-    # model @api.pbject should be set here
+    # model @api.object should be set here
     execute_callback :before_all
 
     instance_exec &block if block
 
     execute_callback 'before_%s' % type
 
-    data = send api_method
+    data = send method_name
     response.data data unless response.data?
 
     # after blocks
@@ -161,6 +171,34 @@ class Joshua
     end
   end
 
+  # Send a file from disk to the client. Mirrors Rails / lux-fw API.
+  #
+  # Default behavior is to FORCE a download (Content-Disposition: attachment),
+  # which is the right choice 95% of the time. Pass `download: false` for
+  # the few cases where you want the browser to render it inline (PDFs,
+  # images, plain text previews).
+  #
+  #   send_file '/path/to/invoice.pdf'                               # downloads
+  #   send_file path, name: 'Invoice-2026.pdf'                       # downloads as "Invoice-2026.pdf"
+  #   send_file path, download: false                                # opens in browser
+  #   send_file path, download: false, content_type: 'image/png'     # inline image
+  #
+  # Other supported keys: :content_type, :disposition ('attachment' | 'inline'),
+  # :inline (legacy alias for download:false). Sets ETag + Last-Modified
+  # automatically and answers 304 to matching If-None-Match requests.
+  def send_file path, opts = {}
+    Joshua::FileResponse.new(@api, opts.merge(file: path)).send
+  end
+
+  # Send raw bytes / string (no disk file). Same options as send_file
+  # minus :file. Default is to force download.
+  #
+  #   send_data csv_string, name: 'report.csv', content_type: 'text/csv'
+  #   send_data html, name: 'preview.html', content_type: 'text/html', download: false
+  def send_data content, opts = {}
+    Joshua::FileResponse.new(@api, opts.merge(content: content)).send
+  end
+
   def params
     @api.params
   end
@@ -190,11 +228,20 @@ class Joshua
     response.message data
   end
 
-  def super! name=nil
-    type   = @api.id ? :member : :collection
-    name ||= caller[0].split("'").last.sub("'", '').split('#').last
-    name   = "_api_#{type}_#{name}"
-    self.class.superclass.instance_method(name).bind(self).call
+  # Compatibility shim. Plain `super` now works inside API methods because
+  # method names are not aliased anymore. `super!` resolves the calling
+  # method's name (stripping any `_ref` suffix), then calls the same-typed
+  # parent method.
+  def super! name = nil
+    if name.nil?
+      loc   = caller_locations(1, 1).first
+      label = (loc.base_label || loc.label).to_s
+      label = label.sub(/^block in /, '')
+      name  = label.sub(/_ref$/, '')
+    end
+
+    method_name = @ref ? "#{name}_ref" : name.to_s
+    self.class.superclass.instance_method(method_name).bind(self).call
   end
 
   # execute actions on api host

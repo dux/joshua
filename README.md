@@ -10,23 +10,20 @@ Joshua maps HTTP requests directly to Ruby methods without routing configuration
 
 ```ruby
 class UsersApi < Joshua
-  collection do
-    define :login do
-      desc 'Authenticate user'
-      params do
-        email :email
-        pass String
-      end
-      proc do
-        user = User.authenticate(params.email, params.pass)
-        user ? user.token : error('Invalid credentials')
-      end
-    end
+  unsafe
+  desc 'Authenticate user'
+  params do
+    email :email
+    pass String
+  end
+  def login
+    user = User.authenticate(params.email, params.pass)
+    user ? user.token : error('Invalid credentials')
   end
 
-  member do
-    define :show do
-      proc { User.find(@api.id).to_h }
+  ref do
+    def show
+      User.find(@ref).to_h
     end
   end
 end
@@ -35,6 +32,39 @@ end
 # POST /api/users/login
 # POST /api/users/:id/show
 ```
+
+## Class structure
+
+* Public methods at class root are **collection** endpoints (no resource id).
+* Methods inside `ref do ... end` are **ref/member** endpoints (with a resource id) - each is renamed to `<name>_ref` after the block.
+* `private` methods are never exposed as endpoints - they remain callable helpers.
+
+```ruby
+class UsersApi < Joshua
+  def list                    # /users/list
+    User.all.map(&:to_h)
+  end
+
+  ref do
+    def show                  # /users/:id/show
+      User.find(@ref).to_h
+    end
+  end
+
+  private
+
+  def normalize_email str     # helper, never reachable as endpoint
+    str.to_s.strip.downcase
+  end
+end
+```
+
+Two convenience ivars are set before any action runs:
+
+* `@ref`          - the resource id from the URL (`nil` for collection actions)
+* `@bearer_token` - `Authorization: Bearer <token>` from the request
+
+The full `@api` accessor is still available (see [Instance Variables](#instance-variables)).
 
 ## Installation
 
@@ -59,17 +89,15 @@ class ApplicationApi < Joshua
 end
 
 class UsersApi < ApplicationApi
-  collection do
-    def ping
-      'pong'
-    end
+  def ping
+    'pong'
   end
 end
 
 run ApplicationApi
 ```
 
-Run with `rackup -p 3000`, then `curl http://localhost:3000/users/ping`.
+Run with `rackup -p 3000`, then `curl -X POST http://localhost:3000/users/ping`.
 
 ### Rails Integration
 
@@ -102,59 +130,42 @@ post '/api/*' do
 end
 ```
 
-## Defining Endpoints
+## Defining endpoints
 
-Use `define :method_name do ... proc do ... end end` to define endpoints (preferred). You can also use plain `def` methods:
+Either `def name` (preferred when no DSL siblings are needed) or `define :name do ... proc do ... end end` (preferred when you want the body, params, and metadata visually grouped):
 
 ```ruby
-collection do
-  # Preferred: define block with proc
-  define :login do
-    desc 'Login endpoint'
-    params do
-      email :email
-    end
-    proc { User.authenticate(params.email) }
-  end
+# def style
+desc 'Login endpoint'
+params { email :email }
+def login
+  User.authenticate(params.email)
+end
 
-  # Alternative: plain def (less visual grouping)
-  desc 'Health check'
-  def ping
-    'pong'
-  end
+# define style
+define :login do
+  desc 'Login endpoint'
+  params { email :email }
+  proc { User.authenticate(params.email) }
 end
 ```
 
+Both work at class root (collection) or inside `ref do ... end` (ref/member).
+
 ## Routing
 
-Routes map directly to methods. No configuration needed.
+| URL                       | Where the method lives           |
+|---------------------------|----------------------------------|
+| `POST /api/users/login`   | root `def login` or `define`     |
+| `POST /api/users/123/show`| inside `ref do def show ... end` |
 
-| Route Pattern | Block Type | Example |
-|--------------|------------|---------|
-| `/class/method` | `collection` | `/users/login` |
-| `/class/:id/method` | `member` | `/users/123/show` |
+Class name `UsersApi` becomes the route prefix `users`. Namespaced `Admin::UsersApi` becomes `admin.users`.
 
 ```ruby
-class UsersApi < Joshua
-  collection do
-    define :login do      # /api/users/login
-      proc { 'login' }
-    end
-  end
-
-  member do
-    define :show do       # /api/users/:id/show
-      proc { @api.id }    # => "123"
-    end
-  end
-end
-
-# Namespaced classes use dots
 module Admin
   class UsersApi < Joshua
-    member do
-      define :ban do      # /api/admin.users/:id/ban
-        proc { }
+    ref do
+      def ban   # /api/admin.users/:id/ban
       end
     end
   end
@@ -163,67 +174,36 @@ end
 
 ## Parameters
 
-Define parameters inside `define` block:
-
 ```ruby
-collection do
-  define :signup do
-    params do
-      email :email                    # required email
-      name String                     # required string
-      age? Integer                    # optional integer
-      role String, default: 'user'   # with default
-      score Integer, min: 0, max: 100
-    end
-    proc do
-      params.email  # access via dot notation
-      params[:name] # or hash syntax
-    end
-  end
+params do
+  email :email                    # required email
+  name String                     # required string
+  age? Integer                    # optional integer
+  role String, default: 'user'    # with default
+  score Integer, min: 0, max: 100
+end
+def signup
+  params.email  # dot notation
+  params[:name] # hash syntax
 end
 ```
 
-### Built-in Types
+### Built-in types
 
-- `:string` (default), `:integer`, `:float`, `:boolean`
-- `:email`, `:url`, `:date`, `:datetime`, `:hash`
+* `:string` (default), `:integer`, `:float`, `:boolean`
+* `:email`, `:url`, `:date`, `:datetime`, `:hash`
+* Typero built-ins: `:label`, `:slug`, `:phone`, `:oib`, `:iban`, `:uuid`, ...
 
-### Custom Parameter Types
-
-```ruby
-class ApplicationApi < Joshua
-  params :phone do |value, opts|
-    error 'Invalid phone' unless value =~ /^\+?[\d\-\s]+$/
-    value.gsub(/\D/, '')  # return normalized value
-  end
-end
-
-class UsersApi < ApplicationApi
-  collection do
-    define :update_phone do
-      params do
-        contact_phone :phone
-      end
-      proc do
-        # params.contact_phone is normalized
-      end
-    end
-  end
-end
-```
-
-### Array Parameters
+### Array parameters
 
 ```ruby
 params do
   tags Array[:string]
-  tags Array[:string], delimiter: /\s*,\s*/  # split string input
+  tags Array[:string], delimiter: /\s*,\s*/  # split a string input
 end
 ```
 
-## Response Format
-
-All responses follow a consistent structure:
+## Response format
 
 ```ruby
 # Success
@@ -244,46 +224,38 @@ All responses follow a consistent structure:
 }
 ```
 
-### Response Methods
+### Response methods
 
 ```ruby
-define :update do
-  proc do
-    message 'User updated'           # set response message
-    response[:request_id] = @api.uid # add metadata
-    response.meta :version, '1.0'    # same as above
-
-    { id: 1, name: 'foo' }           # returned value becomes data
-  end
+def update
+  message 'User updated'           # set response message
+  response[:request_id] = @api.uid # add metadata
+  response.meta :version, '1.0'    # same as above
+  { id: 1, name: 'foo' }           # return value -> data
 end
 ```
 
-### Custom Content Types
+### Custom content types
 
 ```ruby
 define :export_csv do
   proc do
-    response do
-      @user.to_csv  # bypasses JSON wrapper
-    end
+    response { @user.to_csv }  # bypasses JSON wrapper
   end
 end
-# Returns raw CSV with text/plain content type
 ```
 
-## Error Handling
+## Error handling
 
 ```ruby
-define :foo do
-  proc do
-    error 'Something went wrong'      # 400 status
-    error 404, 'Not found'            # custom status
-    error 403, 'Forbidden', code: 'ACCESS_DENIED'  # with error code
-  end
+def foo
+  error 'Something went wrong'                       # 400
+  error 404, 'Not found'                             # custom status
+  error 403, 'Forbidden', code: 'ACCESS_DENIED'      # with code
 end
 ```
 
-### Named Errors and rescue_from
+### Named errors and rescue_from
 
 ```ruby
 class ApplicationApi < Joshua
@@ -294,29 +266,28 @@ class ApplicationApi < Joshua
   end
 
   rescue_from :all do |e|
-    # catch-all for unhandled exceptions
     error 500, 'Internal error'
   end
 end
 
 class UsersApi < ApplicationApi
-  member do
-    define :show do
-      proc do
-        error :unauthorized unless @current_user
-        User.find(@api.id)  # raises RecordNotFound if missing
-      end
+  ref do
+    def show
+      error :unauthorized unless @current_user
+      User.find(@ref)
     end
   end
 end
 ```
 
-## Lifecycle Callbacks
+## Lifecycle callbacks
+
+Root callbacks fire for both collection and ref actions. `ref do before do end end` scopes to member actions only.
 
 ```ruby
 class ApplicationApi < Joshua
   before do
-    @current_user = User.find_by(token: @api.bearer)
+    @current_user = User.find_by(token: @bearer_token) if @bearer_token
   end
 
   after do
@@ -325,14 +296,13 @@ class ApplicationApi < Joshua
 end
 
 class UsersApi < ApplicationApi
-  member do
+  ref do
     before do
-      # runs after ApplicationApi's before, only for member methods
-      @user = User.find(@api.id)
+      @user = User.find(@ref)   # runs only for member actions
     end
 
-    define :show do
-      proc { @user.to_h }
+    def show
+      @user.to_h
     end
   end
 end
@@ -340,40 +310,32 @@ end
 
 ## Authentication
 
-Bearer tokens are extracted from the `Authorization` header:
-
 ```ruby
 # Request: Authorization: Bearer abc123
 
 class ApplicationApi < Joshua
   before do
-    if @api.bearer
-      @current_user = User.find_by(token: @api.bearer)
-      error 401, 'Invalid token' unless @current_user
-    end
+    next unless @bearer_token
+    @current_user = User.find_by(token: @bearer_token)
+    error 401, 'Invalid token' unless @current_user
   end
 end
 ```
 
-### Unsafe Methods
+### Unsafe methods
 
-Mark methods that don't require authentication:
+Skip the auth requirement on a per-method basis:
 
 ```ruby
-collection do
-  define :login do
-    unsafe
-    proc do
-      # @api.opts.unsafe == true
-      # before filter can check this to skip auth
-    end
-  end
+unsafe
+def login
+  # @api.method_opts[:unsafe] == true so a parent `before` can opt out
 end
 ```
 
 ## Annotations
 
-Create reusable method decorators:
+Reusable method decorators:
 
 ```ruby
 class ApplicationApi < Joshua
@@ -387,21 +349,14 @@ class ApplicationApi < Joshua
 end
 
 class AdminApi < ApplicationApi
-  collection do
-    define :delete_all do
-      require_admin
-      rate_limit 10
-      proc do
-        # protected by annotations
-      end
-    end
+  require_admin
+  rate_limit 10
+  def delete_all
   end
 end
 ```
 
-## Models
-
-Define reusable parameter schemas:
+## Models (reusable param schemas)
 
 ```ruby
 class ApplicationApi < Joshua
@@ -413,82 +368,69 @@ class ApplicationApi < Joshua
 end
 
 class UsersApi < ApplicationApi
-  member do
-    define :update do
-      params do
-        user model: :user_input
-      end
-      proc do
-        @user.update(params.user)
-      end
+  ref do
+    params { user model: :user_input }
+    def update
+      @user.update(params.user)
     end
   end
 end
 ```
 
-## HTTP Methods
+## HTTP methods
 
-By default, all endpoints accept POST only. Use RESTful syntax to specify HTTP methods:
+By default endpoints accept POST only. Use RESTful syntax to allow others:
 
 ```ruby
-member do
-  # Single method - symbol key syntax
-  define get: :show do
-    proc { }
-  end
+define get: :show do
+  proc { }
+end
 
-  define put: :update do
-    proc { }
-  end
+define put: :update do
+  proc { }
+end
 
-  # Multiple methods - hash rocket required for array key
-  define [:get, :put] => :settings do
-    proc { }
-  end
+# Multiple methods for one action - hash rocket required for array key
+define [:get, :put] => :settings do
+  proc { }
+end
 
-  # Alternative: allow inside block
-  define :archive do
-    allow :put
-    proc { }
-  end
+# Or allow inside the body
+define :archive do
+  allow :put
+  proc { }
+end
 
-  define :config do
-    allow :get, :put, :delete
-    proc { }
-  end
+allow :get, :put, :delete
+def config
 end
 ```
 
-## API Documentation
-
-Enable automatic documentation:
+## API documentation
 
 ```ruby
 class UsersApi < Joshua
   documented
+  class_desc   'User operations'
+  class_detail 'Long description for the whole class'
 
-  collection do
-    define :login do
-      desc 'Authenticate user'
-      detail 'Returns JWT token on success'
-      params do
-        email :email
-        pass String
-      end
-      proc { }
-    end
+  desc 'Login endpoint'
+  detail 'Returns JWT token on success'
+  params do
+    email :email
+    pass String
+  end
+  def login
   end
 end
 ```
 
-Documentation available at:
-- `/api` - Interactive HTML docs
-- `/api/_/raw` - JSON schema
-- `/api/_/postman` - Postman import URL
+Available at:
+* `/api`            - interactive HTML docs
+* `/api/_/raw`      - JSON schema
+* `/api/_/postman`  - Postman import URL
 
-## JSON RPC Mode
-
-Joshua also accepts JSON RPC style requests:
+## JSON RPC mode
 
 ```bash
 curl -X POST http://localhost:3000/api \
@@ -507,11 +449,9 @@ Call API methods directly without HTTP:
 ```ruby
 # Collection method
 result = UsersApi.render.login(email: 'foo@bar.com', pass: 'secret')
-# => { success: true, data: 'token-abc', ... }
 
 # Member method
 result = UsersApi.render.show(123)
-# => { success: true, data: { id: 123, ... }, ... }
 
 # With bearer token
 result = UsersApi.render.show(123, bearer: 'user-token')
@@ -520,7 +460,7 @@ result = UsersApi.render.show(123, bearer: 'user-token')
 result = UsersApi.render(:login, params: { email: 'foo@bar.com' })
 ```
 
-### RSpec Example
+### RSpec example
 
 ```ruby
 RSpec.describe UsersApi do
@@ -528,7 +468,6 @@ RSpec.describe UsersApi do
     it 'returns token for valid credentials' do
       result = UsersApi.render.login(email: 'test@example.com', pass: 'valid')
       expect(result[:success]).to be true
-      expect(result[:data]).to be_present
     end
 
     it 'returns error for invalid credentials' do
@@ -541,27 +480,27 @@ end
 
 ## Inheritance
 
-API classes inherit from each other like normal Ruby:
+API classes inherit normally. Plain `super` works for collection methods. Inside `ref do`, use `super!` (the internal `_ref` rename breaks Ruby's `super`).
 
 ```ruby
 class ApplicationApi < Joshua
   before { @current_user = authenticate }
-  after { log_request }
+  after  { log_request }
 end
 
 class ModelApi < ApplicationApi
-  before { @model = load_model }
+  before do
+    @model = load_model(@ref) if @ref
+  end
 
-  member do
-    define :show do
-      proc { @model.to_h }
+  ref do
+    def show
+      @model.to_h
     end
 
-    define :delete do
-      proc do
-        @model.destroy
-        message 'Deleted'
-      end
+    def delete
+      @model.destroy
+      message 'Deleted'
     end
   end
 end
@@ -571,12 +510,10 @@ class UsersApi < ModelApi
 end
 
 class PostsApi < ModelApi
-  member do
-    define :show do
-      proc do
-        super!  # call ModelApi's show
-        # add extra logic
-      end
+  ref do
+    def show
+      base = super!
+      base.merge(extra: 'something')
     end
   end
 end
@@ -584,13 +521,13 @@ end
 
 ## Plugins
 
-Create reusable API modules:
-
 ```ruby
 Joshua.plugin :pagination do
+  private
+
   def paginate(collection)
     page = (params.page || 1).to_i
-    per = (params.per || 20).to_i
+    per  = (params.per  || 20).to_i
     collection.limit(per).offset((page - 1) * per)
   end
 end
@@ -598,36 +535,46 @@ end
 class UsersApi < Joshua
   plugin :pagination
 
-  collection do
-    define :index do
-      proc { paginate(User.all).map(&:to_h) }
-    end
+  def index
+    paginate(User.all).map(&:to_h)
   end
 end
 ```
 
-## Instance Variables
+## Instance variables
 
-Available in API methods via `@api`:
+The most-used convenience ivars (set before any callback or action body):
 
-| Variable | Description |
-|----------|-------------|
-| `@api.id` | Resource ID (member methods) |
-| `@api.bearer` | Bearer token from Authorization header |
-| `@api.action` | Current method name (symbol) |
-| `@api.params` | Request parameters |
-| `@api.request` | Rack request object |
-| `@api.response` | Joshua response object |
-| `@api.opts` | Options passed to initializer |
-| `@api.development` | Development mode flag |
+| Variable        | Description                                            |
+|-----------------|--------------------------------------------------------|
+| `@ref`          | Resource id from URL (member only; nil for collection) |
+| `@bearer_token` | Bearer token from `Authorization` header               |
+
+Full `@api` accessor:
+
+| Variable             | Description                                            |
+|----------------------|--------------------------------------------------------|
+| `@api.id`            | Resource id (same as `@ref`)                           |
+| `@api.bearer`        | Bearer token (same as `@bearer_token`)                 |
+| `@api.action`        | Current method name (symbol)                           |
+| `@api.params`        | Request parameters                                     |
+| `@api.request`       | Rack request object                                    |
+| `@api.response`      | Joshua response object                                 |
+| `@api.method_opts`   | Per-method options (params, allow, unsafe, ...)        |
+| `@api.opts`          | Options passed to the initializer                      |
+| `@api.development`   | Development-mode flag                                  |
+
+## Reference example
+
+`spec/api/kitchen_sink_api.rb` + `spec/tests/kitchen_sink_spec.rb` exercise every DSL feature in one place - use them as the single source of truth for the current syntax.
 
 ## Dependencies
 
-- rack
-- json
-- html-tag
-- hash_wia
-- typero
+* rack
+* json
+* html-tag
+* hash_wia
+* typero
 
 ## Development
 
@@ -635,7 +582,7 @@ Available in API methods via `@api`:
 git clone https://github.com/dux/joshua.git
 cd joshua
 bundle install
-rspec
+bundle exec rspec
 ```
 
 ## License

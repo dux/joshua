@@ -3,36 +3,34 @@ require_relative '../loader'
 describe 'define block syntax' do
   before(:all) do
     class DefineTestApi < ApplicationApi
-      collection do
-        define :simple_define do
-          proc { 'simple' }
-        end
+      define :simple_define do
+        proc { 'simple' }
+      end
 
-        define :with_params do
-          params do
-            name String
-            age? Integer
-          end
-          proc do
-            { name: params.name, age: params.age }
-          end
+      define :with_params do
+        params do
+          name String
+          age? Integer
         end
-
-        define :with_desc do
-          desc 'A described method'
-          detail 'More details here'
-          proc { 'described' }
-        end
-
-        define :with_annotations do
-          unsafe
-          proc { @api.opts.unsafe }
+        proc do
+          { name: params.name, age: params.age }
         end
       end
 
-      member do
+      define :with_desc do
+        desc 'A described method'
+        detail 'More details here'
+        proc { 'described' }
+      end
+
+      define :with_annotations do
+        unsafe
+        proc { @api.opts.unsafe }
+      end
+
+      ref do
         define :member_define do
-          proc { "member_#{@api.id}" }
+          proc { "member_#{@ref}" }
         end
 
         define :with_allow do
@@ -102,54 +100,52 @@ end
 describe 'RESTful define syntax' do
   before(:all) do
     class RestfulDefineApi < ApplicationApi
-      collection do
-        # define get: :action syntax
-        define get: :rest_get do
-          proc { 'rest_get_result' }
-        end
-
-        define post: :rest_post do
-          proc { 'rest_post_result' }
-        end
-
-        define put: :rest_put do
-          proc { 'rest_put_result' }
-        end
-
-        define delete: :rest_delete do
-          proc { 'rest_delete_result' }
-        end
-
-        # define :action, allow: :method syntax
-        define :allow_get, allow: :get do
-          proc { 'allow_get_result' }
-        end
-
-        define :allow_put, allow: :put do
-          proc { 'allow_put_result' }
-        end
-
-        # multiple HTTP methods for same action
-        define [:get, :put] => :multi_method do
-          proc { 'multi_method_result' }
-        end
-
-        define :multi_allow, allow: [:get, :delete] do
-          proc { 'multi_allow_result' }
-        end
+      # define get: :action syntax
+      define get: :rest_get do
+        proc { 'rest_get_result' }
       end
 
-      member do
+      define post: :rest_post do
+        proc { 'rest_post_result' }
+      end
+
+      define put: :rest_put do
+        proc { 'rest_put_result' }
+      end
+
+      define delete: :rest_delete do
+        proc { 'rest_delete_result' }
+      end
+
+      # define :action, allow: :method syntax
+      define :allow_get, allow: :get do
+        proc { 'allow_get_result' }
+      end
+
+      define :allow_put, allow: :put do
+        proc { 'allow_put_result' }
+      end
+
+      # multiple HTTP methods for same action
+      define [:get, :put] => :multi_method do
+        proc { 'multi_method_result' }
+      end
+
+      define :multi_allow, allow: [:get, :delete] do
+        proc { 'multi_allow_result' }
+      end
+
+      ref do
         define get: :member_rest_get do
-          proc { "member_#{@api.id}" }
+          proc { "member_#{@ref}" }
         end
 
         define :member_allow_get, allow: :get do
-          proc { "member_allow_#{@api.id}" }
+          proc { "member_allow_#{@ref}" }
         end
 
         define [:get, :put, :delete] => :member_multi do
-          proc { "member_multi_#{@api.id}" }
+          proc { "member_multi_#{@ref}" }
         end
       end
     end

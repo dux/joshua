@@ -1,5 +1,20 @@
 # Joshua API - AI Library Guide
 
+> **DSL update**: Joshua moved from `collection do` / `member do` blocks to a
+> lux-fw-style `ref do` block plus root-level public methods. This guide still
+> contains older examples in places. The current syntax is in:
+>
+> * `AGENTS.md` (top-level)
+> * `spec/api/kitchen_sink_api.rb` + `spec/tests/kitchen_sink_spec.rb` (canonical reference)
+>
+> Quick summary of the new model:
+>
+> * Public method at class root = collection action (no resource id).
+> * Public method inside `ref do ... end` = ref/member action (renamed to `<name>_ref`).
+> * `private` methods are never exposed as endpoints - they remain callable helpers.
+> * `@ref` and `@bearer_token` are auto-set ivars (mirror `@api.id` / `@api.bearer`).
+> * Inside `ref do`, use `super!` (not plain `super`) when chaining to a parent.
+
 This guide helps AI agents understand, use, and write code for the Joshua Ruby API framework.
 
 ## Overview

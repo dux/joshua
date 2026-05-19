@@ -12,27 +12,25 @@ end
 describe 'HTTP method restrictions' do
   before(:all) do
     class HttpTestApi < ApplicationApi
-      collection do
-        # No allow = POST only
-        define :post_only do
-          proc { 'post_only_result' }
-        end
+      # No allow = POST only
+      define :post_only do
+        proc { 'post_only_result' }
+      end
 
-        # GET allowed
-        define get: :get_allowed do
-          proc { 'get_allowed_result' }
-        end
+      # GET allowed
+      define get: :get_allowed do
+        proc { 'get_allowed_result' }
+      end
 
-        # Multiple methods allowed
-        define [:get, :put] => :multi_allowed do
-          proc { 'multi_allowed_result' }
-        end
+      # Multiple methods allowed
+      define [:get, :put] => :multi_allowed do
+        proc { 'multi_allowed_result' }
+      end
 
-        # Using allow inside block
-        define :explicit_allow do
-          allow :get, :delete
-          proc { 'explicit_allow_result' }
-        end
+      # Using allow inside block
+      define :explicit_allow do
+        allow :get, :delete
+        proc { 'explicit_allow_result' }
       end
     end
   end

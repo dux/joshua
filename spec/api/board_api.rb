@@ -1,20 +1,18 @@
 class BoardApi < ApplicationApi
   documented
 
-  desc 'Todo boards'
+  class_desc 'Todo boards'
 
-  collection do
-    define :list do
-      desc 'List all boards'
-      proc do
-        Board::STORE.map(&:to_h)
-      end
+  define :list do
+    desc 'List all boards'
+    proc do
+      Board::STORE.map(&:to_h)
     end
   end
 
-  member do
+  ref do
     before do
-      @board = Board.find(@api.id)
+      @board = Board.find(@ref)
       error 'Board not found' unless @board
     end
 

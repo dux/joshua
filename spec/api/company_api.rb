@@ -3,23 +3,21 @@ class CompanyApi < ModelApi
 
   documented
 
-  collection do
-    params do
-      country_id  Integer
-      is_active   false
-    end
-    allow :put
-    desc 'List of available companies'
-    def index
-      message 'done'
-    end
-
-    def info
-      { countries_in_index: 123 }
-    end
+  params do
+    country_id  Integer
+    is_active   false
+  end
+  allow :put
+  desc 'List of available companies'
+  def index
+    message 'done'
   end
 
-  member do
+  def info
+    { countries_in_index: 123 }
+  end
+
+  ref do
     desc 'Simple index'
     params do
       set      :is_active, false
@@ -51,9 +49,4 @@ class CompanyApi < ModelApi
       end
     end
   end
-
-  def index
-    123
-  end
 end
-

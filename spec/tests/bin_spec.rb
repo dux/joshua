@@ -158,7 +158,9 @@ describe 'bin/joshua' do
 
   def joshua(*args)
     cmd = args.map { |a| a.include?(' ') || a.include?('{') ? "'#{a}'" : a }.join(' ')
-    `JOSHUA_HOST=#{HOST} ruby #{BIN} #{cmd} 2>&1`
+    # capture stdout + stderr, but strip bundler/rubygems warnings that pollute output
+    out = `JOSHUA_HOST=#{HOST} ruby #{BIN} #{cmd} 2>&1`
+    out.lines.reject { |l| l =~ %r{warning: (already initialized|previous definition)} || l =~ %r{rubygems_ext\.rb|platform\.rb} }.join
   end
 
   def joshua_json(*args)
