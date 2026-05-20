@@ -30,7 +30,7 @@ end
 
 # Routes created automatically:
 # POST /api/users/login
-# POST /api/users/:id/show
+# POST /api/users/:ref/show
 ```
 
 ## Class structure
@@ -46,7 +46,7 @@ class UsersApi < Joshua
   end
 
   ref do
-    def show                  # /users/:id/show
+    def show                  # /users/:ref/show
       User.find(@ref).to_h
     end
   end
@@ -165,7 +165,7 @@ Class name `UsersApi` becomes the route prefix `users`. Namespaced `Admin::Users
 module Admin
   class UsersApi < Joshua
     ref do
-      def ban   # /api/admin.users/:id/ban
+      def ban   # /api/admin.users/:ref/ban
       end
     end
   end

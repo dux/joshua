@@ -42,7 +42,7 @@ class Joshua
           methods = api_doc[type] or next
 
           methods.each do |action, mdata|
-            # OpenAPI uses {id} not :id
+            # OpenAPI uses {ref} not :ref
             openapi_path = mdata[:path].gsub(/\/:([a-z_]+)/i, '/{\1}')
 
             ops = {}

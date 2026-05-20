@@ -56,7 +56,7 @@ class Joshua
         cleaned = (mopts || {}).reject { |k, _| k.to_s.start_with?('_') }
 
         path_parts = [base, api_name]
-        path_parts << ':id' if type == :member
+        path_parts << ':ref' if type == :member
         path_parts << action.to_s
 
         out[action] = {

@@ -529,7 +529,7 @@ RSpec.describe UsersApi do
     end
   end
 
-  describe 'GET /users/:id/show' do
+  describe 'GET /users/:ref/show' do
     it 'returns user data' do
       result = UsersApi.render.show(user.id, bearer: user.token)
 

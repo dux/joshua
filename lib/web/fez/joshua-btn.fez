@@ -7,13 +7,13 @@
 
     init() {
       this.copy('id', 'class', 'style', 'href', 'target', 'onclick', 'title', 'name', 'type', 'data-name')
-      this.root.classList.add('jbtn')
+      this.root.classList.add('btn')
 
-      if (this.prop('sm')       !== undefined) this.root.classList.add('jbtn-sm')
-      if (this.prop('primary')  !== undefined) this.root.classList.add('jbtn-primary')
-      if (this.prop('ghost')    !== undefined) this.root.classList.add('jbtn-ghost')
-      if (this.prop('outline')  !== undefined) this.root.classList.add('jbtn-outline')
-      if (this.prop('on-dark')  !== undefined) this.root.classList.add('jbtn-on-dark')
+      if (this.prop('sm')       !== undefined) this.root.classList.add('btn-sm')
+      if (this.prop('primary')  !== undefined) this.root.classList.add('btn-primary')
+      if (this.prop('ghost')    !== undefined) this.root.classList.add('btn-ghost')
+      if (this.prop('outline')  !== undefined) this.root.classList.add('btn-outline')
+      if (this.prop('on-dark')  !== undefined) this.root.classList.add('btn-on-dark')
       if (this.prop('disabled') !== undefined) this.root.setAttribute('disabled', '')
     }
   }

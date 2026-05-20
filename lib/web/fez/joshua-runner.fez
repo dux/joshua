@@ -122,18 +122,13 @@ System.out.println(res.body());`
       this.state.api_name = props.api_name
       this.state.entry    = props.entry
       this.state.tab      = null
-      this.state.bearer   = window.joshua.bearer
+      this.state.bearer   = localStorage.getItem('joshua_bearer') || ''
       this.state.values   = this.defaultValues(props.entry.params || {})
       this.state.ref      = ''
       this.state.copied   = false
       this._lastResponse  = null     // non-reactive: avoids re-render flicker
 
-      this.bearerListener = () => { this.state.bearer = window.joshua.bearer; this.refresh() }
-      window.addEventListener('joshua:bearer-changed', this.bearerListener)
-    }
-
-    onDestroy() {
-      window.removeEventListener('joshua:bearer-changed', this.bearerListener)
+      this.subscribe('joshua:bearer-changed', (bearer) => { this.state.bearer = bearer; this.refresh() })
     }
 
     defaultValues(params) {
@@ -167,7 +162,7 @@ System.out.println(res.body());`
 
     resolvedPath() {
       let p = this.state.entry.path
-      if (this.isMember()) p = p.replace(':id', this.state.ref || ':id')
+      if (this.isMember()) p = p.replace(':ref', this.state.ref || ':ref')
       return p
     }
 
@@ -179,7 +174,7 @@ System.out.println(res.body());`
         filled[k]  = v !== undefined && v !== '' ? v : (spec.default !== undefined ? spec.default : `<${spec.type || 'value'}>`)
       })
       const path  = this.isMember()
-        ? this.state.entry.path.replace(':id', this.state.ref || ':id')
+        ? this.state.entry.path.replace(':ref', this.state.ref || ':ref')
         : this.state.entry.path
       const mount = (window.joshua.api_schema?.mount_on || '/').replace(/\/+$/, '')
       return {
@@ -191,7 +186,7 @@ System.out.println(res.body());`
         action:  this.state.entry.action,
         api:     this.state.api_name,
         kind:    this.state.entry.kind,
-        ref:     this.state.ref || ':id'
+        ref:     this.state.ref || ':ref'
       }
     }
 

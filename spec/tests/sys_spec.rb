@@ -46,7 +46,7 @@ describe Joshua::Introspect do
 
   it 'builds full paths with mount_on' do
     show = doc.dig(:apis, 'company', :member, :show)
-    expect(show[:path]).to eq('/api/company/:id/show')
+    expect(show[:path]).to eq('/api/company/:ref/show')
   end
 
   it 'preserves http methods and adds POST as default' do
@@ -87,14 +87,14 @@ describe 'Joshua::SysApi endpoints' do
     expect(company_group[:item]).not_to be_empty
 
     show = company_group[:item].find { |i| i[:name] == 'show' }
-    expect(show.dig(:request, :url, :raw)).to eq('http://example.com/api/company/:id/show')
+    expect(show.dig(:request, :url, :raw)).to eq('http://example.com/api/company/:ref/show')
   end
 
   it 'openapi returns a 3.0 spec' do
     body = sys_call(:openapi)
     expect(body[:openapi]).to start_with('3.')
-    expect(body[:paths]).to have_key(:'/api/company/{id}/show')
-    op = body.dig(:paths, :'/api/company/{id}/show')
+    expect(body[:paths]).to have_key(:'/api/company/{ref}/show')
+    op = body.dig(:paths, :'/api/company/{ref}/show')
     # show has no explicit allow, so just POST
     expect(op.keys).to include(:post)
   end
@@ -110,9 +110,10 @@ describe 'Joshua::SysApi endpoints' do
     expect(html).to include('<script fez="?file=/fez/joshua-runner.fez">')
     expect(html).to include('?file=vendor/postwind.js')
     expect(html).to include('?file=vendor/fez.js')
-    expect(html).to include('id="nav-apis"')         # static nav skeleton
-    expect(html).to include('id="bearer-toggle"')    # static header
-    expect(html).to include('id="search-input"')     # filter
+    expect(html).to include('<joshua-header>')       # header component mount
+    expect(html).to include('joshua-header.fez')     # header component registered
+    expect(html).to include('<joshua-sidebar>')      # sidebar component mount
+    expect(html).to include('joshua-sidebar.fez')    # sidebar component registered
     expect(html).not_to include('<xmp fez=')
   end
 
@@ -198,7 +199,7 @@ describe 'Joshua rack call' do
     status, headers, body = Joshua.call(rack_env(path: '/api/sys/web'))
     expect(status).to eq(200)
     expect(headers['Content-Type']).to start_with('text/html')
-    expect(body.first).to include('id="apis-content"')
+    expect(body.first).to include('<joshua-apis>')
     expect(body.first).to include('?file=vendor/postwind.js')
     expect(body.first).to include('?file=vendor/fez.js')
   end

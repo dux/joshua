@@ -222,7 +222,7 @@ describe 'bin/joshua' do
 
   # --- board show ---
 
-  describe 'board/:id/show' do
+  describe 'board/:ref/show' do
     it 'shows board 1' do
       data = joshua_json('board/1/show')
       expect(data['success']).to eq(true)
@@ -244,7 +244,7 @@ describe 'bin/joshua' do
 
   # --- tasks ---
 
-  describe 'board/:id/tasks' do
+  describe 'board/:ref/tasks' do
     it 'lists all 7 tasks for board 1' do
       data = joshua_json('board/1/tasks')
       expect(data['success']).to eq(true)

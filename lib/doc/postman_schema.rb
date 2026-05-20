@@ -94,7 +94,7 @@ class Joshua
     end
 
     # Combine request host with the introspection path (which already
-    # includes mount_on, e.g. "/api/company/:id/show").
+    # includes mount_on, e.g. "/api/company/:ref/show").
     def absolute_url path
       "#{request.scheme}://#{request.host_with_port}#{path}"
     end
