@@ -182,7 +182,7 @@ class ApplicationApi < Joshua
   rescue_from :not_found, 'Resource not found'
   rescue_from :forbidden, 'Access denied'
 
-  rescue_from Policy::Error do |error|
+  rescue_from Lux::Policy::Error do |error|
     error 403, 'Policy error: %s' % error.message
   end
 
@@ -658,7 +658,7 @@ class ApplicationApi < Joshua
   rescue_from :forbidden, 'Access denied'
   rescue_from :validation, 'Validation failed'
 
-  rescue_from Policy::Error do |error|
+  rescue_from Lux::Policy::Error do |error|
     error 403, 'Policy error: %s' % error.message
   end
 end
